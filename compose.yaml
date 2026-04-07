@@ -1,0 +1,45 @@
+services:
+  web:
+    build: .
+
+    depends_on:
+      db:
+        condition: service_healthy
+        restart: true
+      redis:
+        condition: service_started
+
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER?Variable not set}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD?Variable not set}
+      - POSTGRES_DB=${POSTGRES_DB?Variable not set}
+      - POSTGRES_SERVER=db
+      - REDIS_URL=redis://redis:6379
+
+    ports:
+      - 8000:8000
+
+  db:
+    image: postgres:18
+    restart: always
+
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER?Variable not set}
+      - POSTGRES_DB=${POSTGRES_DB?Variable not set}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD?Variable not set}
+
+    volumes:
+      - db-data:/var/lib/postgresql/18/docker
+
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}" ]
+      interval: 10s
+      retries: 5
+      start_period: 30s
+      timeout: 10s
+
+  redis:
+    image: redis:latest
+
+volumes:
+  db-data:
