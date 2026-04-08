@@ -10,7 +10,7 @@ class Link(Base):
     __tablename__ = "links"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    code: Mapped[str] = mapped_column(String, index=True, unique=True)
+    code: Mapped[str] = mapped_column(String, index=True, unique=True, nullable=True)
     original_url: Mapped[str] = mapped_column(String)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
