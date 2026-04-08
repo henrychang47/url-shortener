@@ -5,7 +5,7 @@ redis_client: Redis | None = None
 
 async def init_redis(url: str):
     global redis_client
-    redis_client = from_url(url, decode_response=True)
+    redis_client = from_url(url, decode_responses=True)
 
 
 async def close_redis():
