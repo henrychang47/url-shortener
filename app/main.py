@@ -9,7 +9,7 @@ from app.core.redis import close_redis, init_redis
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    await init_redis(settings.REDIS_URL)
+    await init_redis(str(settings.REDIS_URL))
     yield
     await close_redis()
 
