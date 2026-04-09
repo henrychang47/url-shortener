@@ -15,6 +15,5 @@ class Link(Base):
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
-    custom_alias: Mapped[str | None] = mapped_column(String)
     expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     click_count: Mapped[int] = mapped_column(Integer, default=0)

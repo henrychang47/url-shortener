@@ -11,13 +11,10 @@ class LinkService:
         self.repo = repo
         self.cache_repo = cache_repo
 
-    async def create(
-        self, original_url: str, custom_alias: str | None, expires_at: datetime | None
-    ) -> Link:
+    async def create(self, original_url: str, expires_at: datetime | None) -> Link:
 
         link: Link = await self.repo.pre_create(
             original_url=original_url,
-            custom_alias=custom_alias,
             expires_at=expires_at,
         )
 

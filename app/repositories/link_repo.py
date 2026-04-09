@@ -13,12 +13,10 @@ class LinkRepository:
     async def pre_create(
         self,
         original_url: str,
-        custom_alias: str | None,
         expires_at: datetime | None,
     ):
         link = Link(
             original_url=original_url,
-            custom_alias=custom_alias,
             expires_at=expires_at,
         )
 
