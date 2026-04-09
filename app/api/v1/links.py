@@ -4,7 +4,7 @@ from fastapi.responses import RedirectResponse
 from app.core.deps import LinkServiceDep, RateLimiter
 from app.schemas.link import LinkCreate, LinkRead
 
-router = APIRouter()
+router = APIRouter(prefix="/v1")
 
 
 @router.post(
