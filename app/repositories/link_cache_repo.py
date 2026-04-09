@@ -7,12 +7,18 @@ class LinkCacheRepository:
     def __init__(self, redis: Redis) -> None:
         self.redis: Redis = redis
 
-    async def set(self, code: str, original_url: str, expires_at: datetime | None):
+    async def set(
+        self, code: str, original_url: str, expires_at: datetime | None
+    ) -> None:
         now = datetime.now(timezone.utc)
         default_expires = timedelta(hours=1)
 
-        if expires_at is None or expires_at < now:
+        if expires_at is None:
             ex_delta = default_expires
+
+        elif expires_at < now:
+            return
+
         else:
             ex_delta = min(expires_at - now, default_expires)
 

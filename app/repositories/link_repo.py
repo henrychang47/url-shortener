@@ -1,6 +1,6 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
-from sqlalchemy import select, update
+from sqlalchemy import or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.link import Link
@@ -26,7 +26,15 @@ class LinkRepository:
         return link
 
     async def get_by_code(self, code: str) -> Link | None:
-        link_res = await self.db.execute(select(Link).where(Link.code == code))
+        link_res = await self.db.execute(
+            select(Link).where(
+                Link.code == code,
+                or_(
+                    Link.expires_at.is_(None),
+                    Link.expires_at > datetime.now(timezone.utc),
+                ),
+            )
+        )
         return link_res.scalar_one_or_none()
 
     async def delete_by_code(self, code: str) -> bool:
