@@ -1,15 +1,7 @@
-def base62_encode(n: int) -> str:
-    ALPHABET = "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-    devisor = len(ALPHABET)
-    dividend = n
+from sqids import Sqids
 
-    if n == 0:
-        return "0"
+sqids = Sqids(min_length=6)
 
-    result: str = ""
-    while dividend > 0:
-        new_dividend, remainder = divmod(dividend, devisor)
-        result += str(ALPHABET[remainder])
-        dividend = new_dividend
 
-    return result[::-1]
+def encode_from_num(num: int) -> str:
+    return sqids.encode([num])

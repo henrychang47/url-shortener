@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from app.core.utils import base62_encode
+from app.core.utils import encode_from_num
 from app.models.link import Link
 from app.repositories.link_cache_repo import LinkCacheRepository
 from app.repositories.link_repo import LinkRepository
@@ -18,7 +18,7 @@ class LinkService:
             expires_at=expires_at,
         )
 
-        link.code = base62_encode(link.id)
+        link.code = encode_from_num(link.id)
 
         await self.repo.commit()
         await self.repo.refresh(link)
