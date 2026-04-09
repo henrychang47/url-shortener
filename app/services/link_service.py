@@ -45,3 +45,6 @@ class LinkService:
             return link.original_url
 
         return None
+
+    async def increment_click_count(self, code: str) -> None:
+        await self.repo.increment_click_count(code)
