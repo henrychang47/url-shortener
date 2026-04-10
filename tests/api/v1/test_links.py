@@ -74,7 +74,7 @@ class TestRedirect:
 
     async def test_redirect_not_found(self, client: AsyncClient):
         """Redirect for non-existent code returns 404."""
-        response = await client.get("/doesnotexist", follow_redirects=False)
+        response = await client.get("/v1/doesnotexist", follow_redirects=False)
         assert response.status_code == 404
 
     async def test_redirect_increments_click_count(self, client: AsyncClient):
