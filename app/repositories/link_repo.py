@@ -1,6 +1,6 @@
 from datetime import datetime, timezone
 
-from sqlalchemy import or_, select, update
+from sqlalchemy import delete, or_, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.link import Link
@@ -38,13 +38,11 @@ class LinkRepository:
         return link_res.scalar_one_or_none()
 
     async def delete_by_code(self, code: str) -> bool:
-        link = await self.get_by_code(code)
-        if link is None:
-            return False
-
-        await self.db.delete(link)
+        result = await self.db.execute(
+            delete(Link).where(Link.code == code).returning(Link.id)
+        )
         await self.db.commit()
-        return True
+        return result.scalar() is not None
 
     async def increment_click_count(self, code: str) -> None:
         stmt = (
