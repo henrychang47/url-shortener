@@ -15,6 +15,9 @@
       --color-text-subtle: #9ca3af;
       --color-label: #374151;
       --color-danger: #dc2626;
+      --color-danger-bg: #fef2f2;
+      --color-danger-border: #fecaca;
+      --color-border-input: #d1d5db;
     }
 
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -70,7 +73,7 @@
     input[type="url"],
     input[type="datetime-local"] {
       width: 100%;
-      border: 1px solid #d1d5db;
+      border: 1px solid var(--color-border-input);
       border-radius: 6px;
       padding: 9px 12px;
       font-size: 14px;
@@ -181,8 +184,8 @@
 
     /* Error toast */
     .toast {
-      background: #fef2f2;
-      border: 1px solid #fecaca;
+      background: var(--color-danger-bg);
+      border: 1px solid var(--color-danger-border);
       border-radius: 8px;
       padding: 10px 16px;
       font-size: 13px;
