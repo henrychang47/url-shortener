@@ -255,6 +255,7 @@
   <script>
     let currentCode = null;
     let statsInterval = null;
+    let toastTimer = null;
 
     // ── Shorten ──────────────────────────────────────────────
     document.getElementById('shorten-form').addEventListener('submit', function(e) {
@@ -265,7 +266,6 @@
     async function shortenUrl() {
       const urlInput    = document.getElementById('url-input');
       const expiryInput = document.getElementById('expiry-input');
-      const btn         = document.getElementById('shorten-btn');
 
       const url = urlInput.value.trim();
       if (!url) return;
@@ -318,7 +318,8 @@
       document.getElementById('result-card').classList.remove('hidden');
 
       if (statsInterval) clearInterval(statsInterval);
-      statsInterval = setInterval(() => refreshStats(data.code), 10000);
+      const capturedCode = data.code;
+      statsInterval = setInterval(() => refreshStats(capturedCode), 10000);
     }
 
     function updateStats(data) {
@@ -331,7 +332,7 @@
     async function refreshStats(code) {
       try {
         const res = await fetch(`/v1/links/${code}/stats`);
-        if (res.ok) updateStats(await res.json());
+        if (res.ok && code === currentCode) updateStats(await res.json());
       } catch { /* silent — refresh is best-effort */ }
     }
 
@@ -341,9 +342,13 @@
     async function copyToClipboard() {
       const link = document.getElementById('short-url-link');
       const btn  = document.getElementById('copy-btn');
-      await navigator.clipboard.writeText(link.href);
-      btn.textContent = 'Copied!';
-      setTimeout(() => { btn.textContent = 'Copy'; }, 1500);
+      try {
+        await navigator.clipboard.writeText(link.href);
+        btn.textContent = 'Copied!';
+        setTimeout(() => { btn.textContent = 'Copy'; }, 1500);
+      } catch {
+        showError('Could not copy to clipboard. Please copy the link manually.');
+      }
     }
 
     // ── Delete ────────────────────────────────────────────────
@@ -378,22 +383,31 @@
         422: 'Invalid URL. Please check the format and try again.',
         404: 'Short link not found.',
       };
-      showError(map[res.status] ?? `Unexpected error (${res.status}). Please try again.`);
+      if (map[res.status]) { showError(map[res.status]); return; }
+      try {
+        const body = await res.json();
+        showError(body.detail ?? `Unexpected error (${res.status}). Please try again.`);
+      } catch {
+        showError(`Unexpected error (${res.status}). Please try again.`);
+      }
     }
 
     function showError(message) {
       const toast = document.getElementById('error-toast');
       toast.textContent = `⚠ ${message}`;
       toast.classList.remove('hidden');
-      setTimeout(() => toast.classList.add('hidden'), 4000);
+      if (toastTimer) clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toast.classList.add('hidden'), 4000);
     }
 
     // ── Utilities ─────────────────────────────────────────────
     function formatDate(iso) {
       return new Date(iso).toLocaleDateString('en-US', {
-        month: 'short', day: 'numeric',
+        year: 'numeric', month: 'short', day: 'numeric',
       });
     }
+
+    window.addEventListener('beforeunload', () => clearInterval(statsInterval));
   </script>
 </body>
 </html>
