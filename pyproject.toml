@@ -1,5 +1,5 @@
 [project]
-name = "url-shorter"
+name = "url-shortener"
 version = "0.1.0"
 description = "Add your description here"
 readme = "README.md"
