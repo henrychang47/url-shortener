@@ -17,9 +17,7 @@ async def create_link(
     link_create: LinkCreate,
     link_service: LinkServiceDep,
 ):
-    data = link_create.model_dump()
-    data["original_url"] = str(data["original_url"])
-    link = await link_service.create(**data)
+    link = await link_service.create(link_create)
     return link
 
 

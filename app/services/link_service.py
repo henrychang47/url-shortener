@@ -1,9 +1,8 @@
-from datetime import datetime
-
 from app.core.utils import encode_from_num
 from app.models.link import Link
 from app.repositories.link_cache_repo import LinkCacheRepository
 from app.repositories.link_repo import LinkRepository
+from app.schemas.link import LinkCreate
 
 
 class LinkService:
@@ -11,11 +10,10 @@ class LinkService:
         self.repo = repo
         self.cache_repo = cache_repo
 
-    async def create(self, original_url: str, expires_at: datetime | None) -> Link:
-
+    async def create(self, link_create: LinkCreate) -> Link:
         link: Link = await self.repo.pre_create(
-            original_url=original_url,
-            expires_at=expires_at,
+            original_url=str(link_create.original_url),
+            expires_at=link_create.expires_at,
         )
 
         link.code = encode_from_num(link.id)
