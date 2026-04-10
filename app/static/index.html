@@ -5,12 +5,24 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>URL Shortener</title>
   <style>
+    :root {
+      --color-bg: #f5f5f5;
+      --color-surface: #fff;
+      --color-border: #e5e7eb;
+      --color-border-muted: #f3f4f6;
+      --color-text: #111;
+      --color-text-muted: #6b7280;
+      --color-text-subtle: #9ca3af;
+      --color-label: #374151;
+      --color-danger: #dc2626;
+    }
+
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #f5f5f5;
-      color: #111;
+      background: var(--color-bg);
+      color: var(--color-text);
       min-height: 100vh;
       display: flex;
       align-items: center;
@@ -32,11 +44,11 @@
       margin-bottom: 8px;
     }
     header h1 { font-size: 24px; font-weight: 700; letter-spacing: -0.4px; }
-    header p  { font-size: 14px; color: #6b7280; margin-top: 6px; }
+    header p  { font-size: 14px; color: var(--color-text-muted); margin-top: 6px; }
 
     .card {
-      background: #fff;
-      border: 1px solid #e5e7eb;
+      background: var(--color-surface);
+      border: 1px solid var(--color-border);
       border-radius: 12px;
       padding: 24px;
       width: 100%;
@@ -50,10 +62,10 @@
       display: block;
       font-size: 13px;
       font-weight: 500;
-      color: #374151;
+      color: var(--color-label);
       margin-bottom: 6px;
     }
-    label .optional { font-weight: 400; color: #9ca3af; }
+    label .optional { font-weight: 400; color: var(--color-text-subtle); }
 
     input[type="url"],
     input[type="datetime-local"] {
@@ -62,18 +74,18 @@
       border-radius: 6px;
       padding: 9px 12px;
       font-size: 14px;
-      color: #111;
-      background: #fff;
+      color: var(--color-text);
+      background: var(--color-surface);
       outline: none;
       transition: border-color 0.15s;
     }
-    input:focus { border-color: #111; }
-    input::placeholder { color: #9ca3af; }
+    input:focus { border-color: var(--color-text); }
+    input::placeholder { color: var(--color-text-subtle); }
 
     .btn-primary {
       width: 100%;
-      background: #111;
-      color: #fff;
+      background: var(--color-text);
+      color: var(--color-surface);
       border: none;
       border-radius: 6px;
       padding: 10px;
@@ -83,13 +95,14 @@
       transition: opacity 0.15s;
     }
     .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-primary:hover:not(:disabled) { opacity: 0.85; }
 
     /* Result card */
     .result-label {
       font-size: 11px;
       text-transform: uppercase;
       letter-spacing: 0.6px;
-      color: #9ca3af;
+      color: var(--color-text-subtle);
       margin-bottom: 10px;
     }
 
@@ -104,40 +117,40 @@
       flex: 1;
       font-size: 15px;
       font-weight: 600;
-      color: #111;
+      color: var(--color-text);
       text-decoration: none;
-      border-bottom: 2px solid #e5e7eb;
+      border-bottom: 2px solid var(--color-border);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
       padding-bottom: 1px;
     }
-    #short-url-link:hover { border-color: #111; }
+    #short-url-link:hover { border-color: var(--color-text); }
 
     .btn-copy {
-      background: #f3f4f6;
+      background: var(--color-border-muted);
       border: none;
       border-radius: 6px;
       padding: 7px 14px;
       font-size: 13px;
-      color: #374151;
+      color: var(--color-label);
       cursor: pointer;
       white-space: nowrap;
       flex-shrink: 0;
       transition: background 0.15s;
     }
-    .btn-copy:hover { background: #e5e7eb; }
+    .btn-copy:hover { background: var(--color-border); }
 
     .stats-row {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
       gap: 8px;
       padding-top: 14px;
-      border-top: 1px solid #f3f4f6;
+      border-top: 1px solid var(--color-border-muted);
     }
     .stat { text-align: center; }
     .stat-value { font-size: 18px; font-weight: 700; }
-    .stat-label { font-size: 11px; color: #9ca3af; margin-top: 2px; }
+    .stat-label { font-size: 11px; color: var(--color-text-subtle); margin-top: 2px; }
 
     .result-footer {
       display: flex;
@@ -145,11 +158,11 @@
       align-items: center;
       margin-top: 14px;
       padding-top: 12px;
-      border-top: 1px solid #f3f4f6;
+      border-top: 1px solid var(--color-border-muted);
     }
     .meta-text {
       font-size: 12px;
-      color: #9ca3af;
+      color: var(--color-text-subtle);
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
@@ -159,7 +172,7 @@
       background: none;
       border: none;
       font-size: 12px;
-      color: #dc2626;
+      color: var(--color-danger);
       cursor: pointer;
       padding: 0;
       flex-shrink: 0;
@@ -173,7 +186,7 @@
       border-radius: 8px;
       padding: 10px 16px;
       font-size: 13px;
-      color: #dc2626;
+      color: var(--color-danger);
       width: 100%;
     }
 
@@ -189,25 +202,27 @@
 
     <!-- Form card -->
     <div class="card">
-      <div class="form-group">
-        <label for="url-input">Long URL</label>
-        <input type="url" id="url-input"
-               placeholder="https://example.com/your/very/long/url" required>
-      </div>
-      <div class="form-group">
-        <label for="expiry-input">
-          Expiry date <span class="optional">(optional)</span>
-        </label>
-        <input type="datetime-local" id="expiry-input">
-      </div>
-      <button class="btn-primary" id="shorten-btn">Shorten URL</button>
+      <form id="shorten-form" autocomplete="off">
+        <div class="form-group">
+          <label for="url-input">Long URL</label>
+          <input type="url" id="url-input"
+                 placeholder="https://example.com/your/very/long/url" required>
+        </div>
+        <div class="form-group">
+          <label for="expiry-input">
+            Expiry date <span class="optional">(optional)</span>
+          </label>
+          <input type="datetime-local" id="expiry-input">
+        </div>
+        <button class="btn-primary" id="shorten-btn">Shorten URL</button>
+      </form>
     </div>
 
     <!-- Result card (hidden until a link is created) -->
-    <div class="card hidden" id="result-card">
+    <div class="card hidden" id="result-card" aria-live="polite">
       <div class="result-label">Your short link</div>
       <div class="short-url-row">
-        <a id="short-url-link" href="#" target="_blank" rel="noopener"></a>
+        <a id="short-url-link" href="" target="_blank" rel="noopener"></a>
         <button class="btn-copy" id="copy-btn">Copy</button>
       </div>
       <div class="stats-row">
@@ -231,7 +246,7 @@
     </div>
 
     <!-- Error toast -->
-    <div class="toast hidden" id="error-toast"></div>
+    <div class="toast hidden" id="error-toast" role="alert"></div>
   </main>
 
   <script>
