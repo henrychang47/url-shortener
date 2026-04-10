@@ -57,7 +57,11 @@ async def redirect(
     return RedirectResponse(url=original_url, status_code=status.HTTP_302_FOUND)
 
 
-@router.delete("/links/{code}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/links/{code}",
+    status_code=status.HTTP_204_NO_CONTENT,
+    dependencies=[Depends(RateLimiter())],
+)
 async def delete_link(code: str, link_service: LinkServiceDep):
     deleted = await link_service.delete_by_code(code)
 
