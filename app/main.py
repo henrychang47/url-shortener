@@ -1,4 +1,5 @@
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -7,6 +8,8 @@ from fastapi.responses import FileResponse
 from app.api.v1 import links
 from app.core.config import settings
 from app.core.redis import close_redis, init_redis
+
+BASE_DIR = Path(__file__).parent
 
 
 @asynccontextmanager
@@ -30,4 +33,4 @@ app.include_router(links.router)
 
 @app.get("/")
 async def serve_frontend():
-    return FileResponse("app/static/index.html")
+    return FileResponse(BASE_DIR / "static" / "index.html")
