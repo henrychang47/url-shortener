@@ -397,7 +397,7 @@
       toast.textContent = `⚠ ${message}`;
       toast.classList.remove('hidden');
       if (toastTimer) clearTimeout(toastTimer);
-      toastTimer = setTimeout(() => toast.classList.add('hidden'), 4000);
+      toastTimer = setTimeout(() => { toast.classList.add('hidden'); toastTimer = null; }, 4000);
     }
 
     // ── Utilities ─────────────────────────────────────────────
