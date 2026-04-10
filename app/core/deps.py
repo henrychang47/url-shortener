@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Annotated
 
 from fastapi import Depends, HTTPException, Request, status
@@ -51,7 +51,7 @@ class RateLimiter:
         if client_host is None:
             raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST)
 
-        now = int(datetime.now().timestamp())
+        now = int(datetime.now(timezone.utc).timestamp())
 
         curr_window_id = now // self.window_size
         prev_window_id = curr_window_id - 1
