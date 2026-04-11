@@ -1,7 +1,8 @@
 from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
-from fastapi.responses import RedirectResponse
+from fastapi.responses import FileResponse, RedirectResponse
 
 from app.core.deps import LinkServiceDep, RateLimiter
+from app.core.paths import STATIC_DIR
 from app.schemas.link import LinkCreate, LinkRead
 
 router = APIRouter(prefix="/v1")
@@ -37,18 +38,13 @@ async def link_status(code: str, link_service: LinkServiceDep):
     return link
 
 
-@router.get(
-    "/{code}",
-    dependencies=[Depends(RateLimiter())],
-)
+@router.get("/{code}", dependencies=[Depends(RateLimiter())], response_model=None)
 async def redirect(
     code: str, link_service: LinkServiceDep, background_tasks: BackgroundTasks
-) -> RedirectResponse:
+) -> RedirectResponse | FileResponse:
     original_url = await link_service.get_original_url(code)
     if original_url is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Not valid code"
-        )
+        return FileResponse(STATIC_DIR / "404.html", status_code=404)
 
     background_tasks.add_task(link_service.increment_click_count, code)
 

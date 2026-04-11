@@ -8,6 +8,7 @@ from fastapi.responses import FileResponse
 from app.api.v1 import links
 from app.core.config import settings
 from app.core.redis import close_redis, init_redis
+from app.core.paths import STATIC_DIR
 
 BASE_DIR = Path(__file__).parent
 
@@ -33,4 +34,4 @@ app.include_router(links.router)
 
 @app.get("/")
 async def serve_frontend():
-    return FileResponse(BASE_DIR / "static" / "index.html")
+    return FileResponse(STATIC_DIR / "index.html")
