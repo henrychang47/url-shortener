@@ -1,8 +1,17 @@
+name: Keep Render Demo Alive
+
 on:
   schedule:
-    - cron: '*/10 * * * *'
+    - cron: '*/14 * * * *'
+  workflow_dispatch:
+
 jobs:
   ping:
     runs-on: ubuntu-latest
     steps:
-      - run: curl https://url-shortener-sbc1.onrender.com/health
+      - name: Ping Render service
+        run: |
+          curl --fail https://url-shortener-sbc1.onrender.com/health \
+            --max-time 30 \
+            --retry 3 \
+            --retry-delay 5
