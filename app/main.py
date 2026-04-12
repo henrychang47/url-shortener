@@ -7,8 +7,8 @@ from fastapi.responses import FileResponse
 
 from app.api.v1 import links
 from app.core.config import settings
-from app.core.redis import close_redis, init_redis
 from app.core.paths import STATIC_DIR
+from app.core.redis import close_redis, init_redis
 
 BASE_DIR = Path(__file__).parent
 
@@ -35,3 +35,8 @@ app.include_router(links.router)
 @app.get("/")
 async def serve_frontend():
     return FileResponse(STATIC_DIR / "index.html")
+
+
+@app.get("/health")
+async def health():
+    return {"status": "ok"}
