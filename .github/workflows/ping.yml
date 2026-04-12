@@ -1,0 +1,8 @@
+on:
+  schedule:
+    - cron: '*/10 * * * *'
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - run: curl https://url-shortener-sbc1.onrender.com/health
