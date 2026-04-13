@@ -1,5 +1,7 @@
 # URL Shortener
 
+**Live Demo:** https://url-shortener-sbc1.onrender.com
+
 A URL shortening service built with FastAPI, PostgreSQL, and Redis.
 
 ## Tech Stack
