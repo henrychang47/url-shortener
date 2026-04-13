@@ -2,7 +2,7 @@ name: Keep Render Demo Alive
 
 on:
   schedule:
-    - cron: '*/14 * * * *'
+    - cron: '*/10 1-10 * * 1-5'
   workflow_dispatch:
 
 jobs:
