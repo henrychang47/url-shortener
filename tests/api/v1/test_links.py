@@ -117,3 +117,33 @@ class TestDeleteLink:
 
         stats_response = await client.get(f"/v1/links/{code}/stats")
         assert stats_response.status_code == 404
+
+
+class TestCleanupExpired:
+    async def test_cleanup_deletes_only_expired_links(self, client: AsyncClient):
+        """Expired links are deleted; active links survive."""
+        expired_at = (datetime.now(timezone.utc) - timedelta(hours=1)).isoformat()
+        await client.post(
+            "/v1/links",
+            json={"original_url": "https://expired.com", "expires_at": expired_at},
+        )
+
+        active_at = (datetime.now(timezone.utc) + timedelta(days=7)).isoformat()
+        active_response = await client.post(
+            "/v1/links",
+            json={"original_url": "https://active.com", "expires_at": active_at},
+        )
+        active_code = active_response.json()["code"]
+
+        response = await client.delete("/v1/links/expired")
+        assert response.status_code == 200
+        assert response.json() == {"deleted": 1}
+
+        stats = await client.get(f"/v1/links/{active_code}/stats")
+        assert stats.status_code == 200
+
+    async def test_cleanup_returns_zero_when_none_expired(self, client: AsyncClient):
+        """Returns 0 when no links have expired."""
+        response = await client.delete("/v1/links/expired")
+        assert response.status_code == 200
+        assert response.json() == {"deleted": 0}
