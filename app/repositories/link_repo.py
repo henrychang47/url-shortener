@@ -58,3 +58,14 @@ class LinkRepository:
 
     async def refresh(self, link: Link):
         await self.db.refresh(link)
+
+    async def delete_expired(self) -> int:
+        now = datetime.now(timezone.utc)
+        result = await self.db.execute(
+            delete(Link).where(
+                Link.expires_at.is_not(None),
+                Link.expires_at < now,
+            )
+        )
+        await self.db.commit()
+        return result.rowcount

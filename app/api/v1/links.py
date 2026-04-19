@@ -52,6 +52,15 @@ async def redirect(
 
 
 @router.delete(
+    "/links/expired",
+    dependencies=[Depends(RateLimiter())],
+)
+async def cleanup_expired_links(link_service: LinkServiceDep):
+    deleted = await link_service.cleanup_expired()
+    return {"deleted": deleted}
+
+
+@router.delete(
     "/links/{code}",
     status_code=status.HTTP_204_NO_CONTENT,
     dependencies=[Depends(RateLimiter())],

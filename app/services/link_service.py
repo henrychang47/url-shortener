@@ -46,3 +46,6 @@ class LinkService:
 
     async def increment_click_count(self, code: str) -> None:
         await self.repo.increment_click_count(code)
+
+    async def cleanup_expired(self) -> int:
+        return await self.repo.delete_expired()
