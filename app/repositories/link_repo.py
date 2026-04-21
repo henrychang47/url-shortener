@@ -48,6 +48,8 @@ class LinkRepository:
         stmt = (
             update(Link)
             .where(Link.code == code)
+
+            
             .values(click_count=Link.click_count + 1)
         )
         await self.db.execute(stmt)
