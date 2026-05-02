@@ -28,6 +28,7 @@ async def _cleanup_loop() -> None:
                 redis = await get_redis()
                 service = LinkService(
                     repo=LinkRepository(db),
+                    read_repo=LinkRepository(db),
                     cache_repo=LinkCacheRepository(redis),
                 )
                 deleted = await service.cleanup_expired()
@@ -69,6 +70,7 @@ async def serve_frontend():
 @app.get("/health")
 async def health():
     return {"status": "ok"}
+
 
 @app.get("/whoami")
 async def whoami():

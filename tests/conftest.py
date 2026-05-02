@@ -3,7 +3,7 @@ import pytest
 from httpx import ASGITransport, AsyncClient
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 
-from app.core.database import Base, get_db
+from app.core.database import Base, get_session
 from app.core.redis import get_redis
 from app.main import app
 
@@ -37,7 +37,7 @@ async def client(engine, fake_redis):
     async def override_get_redis():
         return fake_redis
 
-    app.dependency_overrides[get_db] = override_get_db
+    app.dependency_overrides[get_session] = override_get_db
     app.dependency_overrides[get_redis] = override_get_redis
 
     async with AsyncClient(
