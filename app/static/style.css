@@ -251,6 +251,30 @@ input::placeholder {
     text-decoration: underline;
 }
 
+/* Refresh all bar */
+#refresh-all-bar {
+    width: 100%;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.btn-refresh {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    padding: 7px 14px;
+    font-size: 13px;
+    color: var(--color-label);
+    cursor: pointer;
+    white-space: nowrap;
+    transition: background 0.15s, border-color 0.15s;
+}
+
+.btn-refresh:hover {
+    background: var(--color-border-muted);
+    border-color: var(--color-text-muted);
+}
+
 /* Error toast */
 .toast {
     background: var(--color-danger-bg);

@@ -44,12 +44,34 @@ function setLoading(on) {
     btn.textContent = on ? 'Shortening…' : 'Shorten URL';
 }
 
+// ── Session storage ───────────────────────────────────────
+const STORAGE_KEY = 'url-shortener-links';
+
+function getStoredCodes() {
+    try {
+        return JSON.parse(sessionStorage.getItem(STORAGE_KEY) ?? '[]');
+    } catch {
+        return [];
+    }
+}
+
+function saveLink(data) {
+    const codes = getStoredCodes();
+    if (codes.includes(data.code)) return;
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify([...codes, data.code]));
+}
+
+function removeStoredLink(code) {
+    sessionStorage.setItem(STORAGE_KEY, JSON.stringify(getStoredCodes().filter(c => c !== code)));
+}
+
 // ── Result cards ──────────────────────────────────────────
 function addResultCard(data) {
     const shortUrl = `${window.location.origin}/v1/${data.code}`;
 
     const tpl = document.getElementById('result-card-tpl');
     const card = tpl.content.cloneNode(true).querySelector('.card');
+    card.dataset.code = data.code;
 
     const link = card.querySelector('.short-url-link');
     link.href = shortUrl;
@@ -59,8 +81,6 @@ function addResultCard(data) {
     card.querySelector('.stat-created').textContent = formatDate(data.created_at);
     card.querySelector('.stat-expires').textContent = data.expires_at ? formatDate(data.expires_at) : '—';
     card.querySelector('.original-url-preview').textContent = `→ ${data.original_url}`;
-
-    card.querySelector('.btn-refresh').addEventListener('click', () => refreshStats(data.code, card));
 
     card.querySelector('.btn-copy').addEventListener('click', () => {
         const link = card.querySelector('.short-url-link');
@@ -79,6 +99,10 @@ function addResultCard(data) {
             const res = await fetch(`/v1/links/${data.code}`, { method: 'DELETE' });
             if (res.status === 204) {
                 card.remove();
+                removeStoredLink(data.code);
+                if (container.querySelectorAll('.card[data-code]').length === 0) {
+                    document.getElementById('refresh-all-bar').classList.add('hidden');
+                }
             } else {
                 await handleApiError(res);
             }
@@ -89,16 +113,26 @@ function addResultCard(data) {
 
     const container = document.getElementById('results-container');
     container.insertBefore(card, container.firstChild);
+    document.getElementById('refresh-all-bar').classList.remove('hidden');
+    saveLink(data);
 }
 
-async function refreshStats(code, card) {
+async function refreshAllStats() {
+    const cards = [...document.querySelectorAll('#results-container .card[data-code]')];
+    if (cards.length === 0) return;
     try {
-        const res = await fetch(`/v1/links/${code}/stats`);
+        const params = new URLSearchParams(cards.map(card => ['codes', card.dataset.code]));
+        const res = await fetch(`/v1/links?${params}`);
         if (!res.ok) return;
-        const data = await res.json();
-        card.querySelector('.stat-clicks').textContent = data.click_count;
-        card.querySelector('.stat-created').textContent = formatDate(data.created_at);
-        card.querySelector('.stat-expires').textContent = data.expires_at ? formatDate(data.expires_at) : '—';
+        const links = await res.json();
+        const byCode = Object.fromEntries(links.map(l => [l.code, l]));
+        for (const card of cards) {
+            const data = byCode[card.dataset.code];
+            if (!data) continue;
+            card.querySelector('.stat-clicks').textContent = data.click_count;
+            card.querySelector('.stat-created').textContent = formatDate(data.created_at);
+            card.querySelector('.stat-expires').textContent = data.expires_at ? formatDate(data.expires_at) : '—';
+        }
     } catch { /* silent — refresh is best-effort */ }
 }
 
@@ -131,3 +165,22 @@ function formatDate(iso) {
     const d = new Date(iso);
     return `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()}`;
 }
+
+// Restore cards saved in this browser session
+async function restoreStoredLinks() {
+    const codes = getStoredCodes();
+    if (codes.length === 0) return;
+    try {
+        const params = new URLSearchParams(codes.map(c => ['codes', c]));
+        const res = await fetch(`/v1/links?${params}`);
+        if (!res.ok) return;
+        const links = await res.json();
+        const returnedCodes = new Set(links.map(l => l.code));
+        sessionStorage.setItem(STORAGE_KEY, JSON.stringify(codes.filter(c => returnedCodes.has(c))));
+        codes.map(c => links.find(l => l.code === c)).filter(Boolean).forEach(addResultCard);
+    } catch { /* silent */ }
+}
+
+restoreStoredLinks();
+
+document.getElementById('refresh-all-btn').addEventListener('click', () => refreshAllStats());

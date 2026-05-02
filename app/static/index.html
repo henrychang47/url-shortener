@@ -59,12 +59,16 @@
         <div class="result-footer">
           <span class="meta-text original-url-preview"></span>
           <div class="result-actions">
-            <button class="btn-refresh">Refresh</button>
             <button class="btn-delete">Delete this link</button>
           </div>
         </div>
       </div>
     </template>
+
+    <!-- Refresh all bar (shown when at least one card exists) -->
+    <div id="refresh-all-bar" class="hidden">
+      <button id="refresh-all-btn" class="btn-refresh">Refresh All</button>
+    </div>
 
     <!-- Result cards (dynamically added) -->
     <div id="results-container"></div>
