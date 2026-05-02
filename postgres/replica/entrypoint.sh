@@ -18,5 +18,8 @@ if [ ! -f "${PGDATA}/PG_VERSION" ]; then
   chmod 700 "${PGDATA}"
 fi
 
+# 模擬 10 秒的延遲
+echo "recovery_min_apply_delay = '10s'" >> "${PGDATA}/postgresql.auto.conf"
+
 echo ">>> Starting PostgreSQL as standby..."
 exec gosu postgres postgres
