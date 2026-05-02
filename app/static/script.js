@@ -1,5 +1,3 @@
-let currentCode = null;
-let statsInterval = null;
 let toastTimer = null;
 
 // ── Shorten ──────────────────────────────────────────────
@@ -32,7 +30,7 @@ async function shortenUrl() {
         if (!res.ok) { await handleApiError(res); return; }
 
         const data = await res.json();
-        showResult(data);
+        addResultCard(data);
     } catch {
         showError('Network error. Is the server running?');
     } finally {
@@ -46,79 +44,62 @@ function setLoading(on) {
     btn.textContent = on ? 'Shortening…' : 'Shorten URL';
 }
 
-// ── Result display ────────────────────────────────────────
-function showResult(data) {
-    currentCode = data.code;
-
+// ── Result cards ──────────────────────────────────────────
+function addResultCard(data) {
     const shortUrl = `${window.location.origin}/v1/${data.code}`;
-    const link = document.getElementById('short-url-link');
+
+    const tpl = document.getElementById('result-card-tpl');
+    const card = tpl.content.cloneNode(true).querySelector('.card');
+
+    const link = card.querySelector('.short-url-link');
     link.href = shortUrl;
     link.textContent = shortUrl;
 
-    updateStats(data);
+    card.querySelector('.stat-clicks').textContent = data.click_count;
+    card.querySelector('.stat-created').textContent = formatDate(data.created_at);
+    card.querySelector('.stat-expires').textContent = data.expires_at ? formatDate(data.expires_at) : '—';
+    card.querySelector('.original-url-preview').textContent = `→ ${data.original_url}`;
 
-    document.getElementById('original-url-preview').textContent =
-        `→ ${data.original_url}`;
+    card.querySelector('.btn-refresh').addEventListener('click', () => refreshStats(data.code, card));
 
-    document.getElementById('result-card').classList.remove('hidden');
+    card.querySelector('.btn-copy').addEventListener('click', () => {
+        const link = card.querySelector('.short-url-link');
+        const btn = card.querySelector('.btn-copy');
+        navigator.clipboard.writeText(link.href).then(() => {
+            btn.textContent = 'Copied!';
+            setTimeout(() => { btn.textContent = 'Copy'; }, 1500);
+        }).catch(() => {
+            showError('Could not copy to clipboard. Please copy the link manually.');
+        });
+    });
 
-    if (statsInterval) clearInterval(statsInterval);
-    const capturedCode = data.code;
-    statsInterval = setInterval(() => refreshStats(capturedCode), 10000);
+    card.querySelector('.btn-delete').addEventListener('click', async () => {
+        if (!confirm('Delete this short link? This cannot be undone.')) return;
+        try {
+            const res = await fetch(`/v1/links/${data.code}`, { method: 'DELETE' });
+            if (res.status === 204) {
+                card.remove();
+            } else {
+                await handleApiError(res);
+            }
+        } catch {
+            showError('Network error. Is the server running?');
+        }
+    });
+
+    const container = document.getElementById('results-container');
+    container.insertBefore(card, container.firstChild);
 }
 
-function updateStats(data) {
-    document.getElementById('stat-clicks').textContent = data.click_count;
-    document.getElementById('stat-created').textContent = formatDate(data.created_at);
-    document.getElementById('stat-expires').textContent =
-        data.expires_at ? formatDate(data.expires_at) : '—';
-}
-
-async function refreshStats(code) {
+async function refreshStats(code, card) {
     try {
         const res = await fetch(`/v1/links/${code}/stats`);
-        if (res.ok && code === currentCode) updateStats(await res.json());
+        if (!res.ok) return;
+        const data = await res.json();
+        card.querySelector('.stat-clicks').textContent = data.click_count;
+        card.querySelector('.stat-created').textContent = formatDate(data.created_at);
+        card.querySelector('.stat-expires').textContent = data.expires_at ? formatDate(data.expires_at) : '—';
     } catch { /* silent — refresh is best-effort */ }
-}
-
-// ── Copy ──────────────────────────────────────────────────
-document.getElementById('copy-btn').addEventListener('click', copyToClipboard);
-
-async function copyToClipboard() {
-    const link = document.getElementById('short-url-link');
-    const btn = document.getElementById('copy-btn');
-    try {
-        await navigator.clipboard.writeText(link.href);
-        btn.textContent = 'Copied!';
-        setTimeout(() => { btn.textContent = 'Copy'; }, 1500);
-    } catch {
-        showError('Could not copy to clipboard. Please copy the link manually.');
-    }
-}
-
-// ── Delete ────────────────────────────────────────────────
-document.getElementById('delete-btn').addEventListener('click', deleteLink);
-
-async function deleteLink() {
-    if (!currentCode) return;
-    if (!confirm('Delete this short link? This cannot be undone.')) return;
-
-    try {
-        const res = await fetch(`/v1/links/${currentCode}`, { method: 'DELETE' });
-
-        if (res.status === 204) {
-            clearInterval(statsInterval);
-            statsInterval = null;
-            currentCode = null;
-            document.getElementById('result-card').classList.add('hidden');
-            document.getElementById('url-input').value = '';
-            document.getElementById('expiry-input').value = '';
-        } else {
-            await handleApiError(res);
-        }
-    } catch {
-        showError('Network error. Is the server running?');
-    }
 }
 
 // ── Error handling ────────────────────────────────────────
@@ -147,9 +128,6 @@ function showError(message) {
 
 // ── Utilities ─────────────────────────────────────────────
 function formatDate(iso) {
-    return new Date(iso).toLocaleDateString('en-US', {
-        year: 'numeric', month: 'short', day: 'numeric',
-    });
+    const d = new Date(iso);
+    return `${d.getFullYear()}/${d.getMonth() + 1}/${d.getDate()}`;
 }
-
-window.addEventListener('beforeunload', () => clearInterval(statsInterval));

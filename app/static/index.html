@@ -10,6 +10,7 @@
 
 <body>
   <main>
+    <div class="form-section">
     <header>
       <h1>🔗 URL Shortener</h1>
       <p>Paste a long URL and get a short, shareable link instantly.</p>
@@ -31,33 +32,42 @@
         <button class="btn-primary" id="shorten-btn">Shorten URL</button>
       </form>
     </div>
+    </div><!-- /.form-section -->
 
-    <!-- Result card (hidden until a link is created) -->
-    <div class="card hidden" id="result-card" aria-live="polite">
-      <div class="result-label">Your short link</div>
-      <div class="short-url-row">
-        <a id="short-url-link" href="" target="_blank" rel="noopener"></a>
-        <button class="btn-copy" id="copy-btn">Copy</button>
-      </div>
-      <div class="stats-row">
-        <div class="stat">
-          <div class="stat-value" id="stat-clicks">—</div>
-          <div class="stat-label">Clicks</div>
+    <!-- Template for a result card (cloned per new link) -->
+    <template id="result-card-tpl">
+      <div class="card" aria-live="polite">
+        <div class="result-label">Your short link</div>
+        <div class="short-url-row">
+          <a class="short-url-link" href="" target="_blank" rel="noopener"></a>
+          <button class="btn-copy">Copy</button>
         </div>
-        <div class="stat">
-          <div class="stat-value" id="stat-created">—</div>
-          <div class="stat-label">Created</div>
+        <div class="stats-row">
+          <div class="stat">
+            <div class="stat-value stat-clicks">—</div>
+            <div class="stat-label">Clicks</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value stat-created">—</div>
+            <div class="stat-label">Created</div>
+          </div>
+          <div class="stat">
+            <div class="stat-value stat-expires">—</div>
+            <div class="stat-label">Expires</div>
+          </div>
         </div>
-        <div class="stat">
-          <div class="stat-value" id="stat-expires">—</div>
-          <div class="stat-label">Expires</div>
+        <div class="result-footer">
+          <span class="meta-text original-url-preview"></span>
+          <div class="result-actions">
+            <button class="btn-refresh">Refresh</button>
+            <button class="btn-delete">Delete this link</button>
+          </div>
         </div>
       </div>
-      <div class="result-footer">
-        <span class="meta-text" id="original-url-preview"></span>
-        <button class="btn-delete" id="delete-btn">Delete this link</button>
-      </div>
-    </div>
+    </template>
+
+    <!-- Result cards (dynamically added) -->
+    <div id="results-container"></div>
 
     <!-- Error toast -->
     <div class="toast hidden" id="error-toast" role="alert"></div>
