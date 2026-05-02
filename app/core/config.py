@@ -6,6 +6,7 @@ class Settings(BaseSettings):
     DATABASE_URL: PostgresDsn
     REDIS_URL: RedisDsn
     DEBUG: bool = False
+    SERVER_NAME: str = "api"
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

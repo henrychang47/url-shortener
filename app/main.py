@@ -69,3 +69,7 @@ async def serve_frontend():
 @app.get("/health")
 async def health():
     return {"status": "ok"}
+
+@app.get("/whoami")
+async def whoami():
+    return {"server": settings.SERVER_NAME}
