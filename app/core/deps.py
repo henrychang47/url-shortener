@@ -32,7 +32,7 @@ LinkServiceDep = Annotated[LinkService, Depends(get_link_service)]
 
 
 class RateLimiter:
-    def __init__(self, window_size: int = 60, limit: int = 10) -> None:
+    def __init__(self, window_size: int = 30, limit: int = 30) -> None:
         self.window_size = window_size
         self.limit = limit
 
