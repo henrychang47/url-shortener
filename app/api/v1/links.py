@@ -1,4 +1,5 @@
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, status
+from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
+from typing import Annotated
 from fastapi.responses import FileResponse, RedirectResponse
 
 from app.core.deps import LinkServiceDep, RateLimiter
@@ -37,6 +38,16 @@ async def link_status(code: str, link_service: LinkServiceDep):
 
     return link
 
+@router.get(
+    "/links",
+    response_model=list[LinkRead],
+    dependencies=[Depends(RateLimiter())],
+)
+async def list_links(
+    link_service: LinkServiceDep,
+    codes: Annotated[list[str], Query()] = [],
+):
+    return await link_service.get_by_codes(codes)
 
 @router.get("/{code}", dependencies=[Depends(RateLimiter())], response_model=None)
 async def redirect(

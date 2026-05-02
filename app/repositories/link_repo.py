@@ -37,6 +37,18 @@ class LinkRepository:
         )
         return link_res.scalar_one_or_none()
 
+    async def get_by_codes(self, codes: list[str]) -> list[Link]:
+        link_res = await self.db.execute(
+            select(Link).where(
+                Link.code.in_(codes),
+                or_(
+                    Link.expires_at.is_(None),
+                    Link.expires_at > datetime.now(timezone.utc),
+                ),
+            )
+        )
+        return list(link_res.scalars().all())
+
     async def delete_by_code(self, code: str) -> bool:
         result = await self.db.execute(
             delete(Link).where(Link.code == code).returning(Link.id)

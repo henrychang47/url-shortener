@@ -31,6 +31,9 @@ class LinkService:
     async def get_by_code(self, code: str) -> Link | None:
         return await self.read_repo.get_by_code(code)
 
+    async def get_by_codes(self, codes: list[str]) -> list[Link]:
+        return await self.read_repo.get_by_codes(codes)
+
     async def delete_by_code(self, code: str) -> bool:
         await self.cache_repo.delete(code)
         deleted = await self.repo.delete_by_code(code)
