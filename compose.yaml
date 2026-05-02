@@ -24,6 +24,8 @@ services:
   api-1:
     build: .
     depends_on:
+      migrate:
+        condition: service_completed_successfully
       pg-primary:
         condition: service_healthy
         restart: true
@@ -34,7 +36,8 @@ services:
         condition: service_healthy
         restart: true
     environment:
-      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@pg-primary:5432/${POSTGRES_DB}
+      - DATABASE_URL_REPLICA=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@pg-replica:5432/${POSTGRES_DB}
       - REDIS_URL=redis://redis:6379
       - SERVER_NAME=api-1
     ports:
@@ -53,6 +56,8 @@ services:
   api-2:
     build: .
     depends_on:
+      migrate:
+        condition: service_completed_successfully
       pg-primary:
         condition: service_healthy
         restart: true
@@ -63,7 +68,8 @@ services:
         condition: service_healthy
         restart: true
     environment:
-      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@pg-primary:5432/${POSTGRES_DB}
+      - DATABASE_URL_REPLICA=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@pg-replica:5432/${POSTGRES_DB}
       - REDIS_URL=redis://redis:6379
       - SERVER_NAME=api-2
     ports:
@@ -79,6 +85,19 @@ services:
         limits:
           cpus: '0.5'
           memory: 512M
+  migrate:
+    build: .
+    depends_on:
+      pg-primary:
+        condition: service_healthy
+        restart: true
+      pg-replica:
+        condition: service_healthy
+        restart: true
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@pg-primary:5432/${POSTGRES_DB}
+      - REDIS_URL=redis://dummy:6379 #not used
+    command: [ "uv", "run", "alembic", "upgrade", "head" ]
   pg-primary:
     image: postgres:18
     restart: always

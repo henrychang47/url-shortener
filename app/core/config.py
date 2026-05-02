@@ -4,6 +4,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     DATABASE_URL: PostgresDsn
+    DATABASE_URL_REPLICA: PostgresDsn
     REDIS_URL: RedisDsn
     DEBUG: bool = False
     SERVER_NAME: str = "api"
