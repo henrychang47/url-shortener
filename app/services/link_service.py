@@ -11,9 +11,10 @@ class LinkService:
         repo: LinkRepository,
         read_repo: LinkRepository,
         cache_repo: LinkCacheRepository,
+        READ_AFTER_WRITE: bool | None = None,
     ) -> None:
         self.repo = repo
-        self.read_repo = read_repo
+        self.read_repo = repo if READ_AFTER_WRITE else read_repo
         self.cache_repo = cache_repo
 
     async def create(self, link_create: LinkCreate) -> Link:

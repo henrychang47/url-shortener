@@ -1,5 +1,14 @@
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, status
 from typing import Annotated
+
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    Depends,
+    HTTPException,
+    Query,
+    Response,
+    status,
+)
 from fastapi.responses import FileResponse, RedirectResponse
 
 from app.core.deps import LinkServiceDep, RateLimiter
@@ -16,10 +25,10 @@ router = APIRouter(prefix="/v1")
     dependencies=[Depends(RateLimiter())],
 )
 async def create_link(
-    link_create: LinkCreate,
-    link_service: LinkServiceDep,
+    link_create: LinkCreate, link_service: LinkServiceDep, response: Response
 ):
     link = await link_service.create(link_create)
+    response.set_cookie(key="read_after_write", value=str(True), max_age=15)
     return link
 
 
@@ -38,6 +47,7 @@ async def link_status(code: str, link_service: LinkServiceDep):
 
     return link
 
+
 @router.get(
     "/links",
     response_model=list[LinkRead],
@@ -48,6 +58,7 @@ async def list_links(
     codes: Annotated[list[str], Query()] = [],
 ):
     return await link_service.get_by_codes(codes)
+
 
 @router.get("/{code}", dependencies=[Depends(RateLimiter())], response_model=None)
 async def redirect(
