@@ -1,48 +1,173 @@
 services:
-  web:
-    build: .
-
+  nginx:
+    image: nginx:1-alpine
+    volumes:
+      - type: bind
+        source: ./nginx/conf.d
+        target: /etc/nginx/conf.d
+    ports:
+      - 80:80
+    healthcheck:
+      test: [ "CMD", "curl", "-sf", "http://localhost/health" ]
+      interval: 1m
+      timeout: 20s
+      retries: 3
+      start_period: 10s
     depends_on:
-      db:
+      - api-1
+      - api-2
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 128M
+  api-1:
+    build: .
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      pg-primary:
+        condition: service_healthy
+        restart: true
+      pg-replica:
         condition: service_healthy
         restart: true
       redis:
-        condition: service_started
-
+        condition: service_healthy
+        restart: true
     environment:
-      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      - PYTHONUNBUFFERED=1
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@pg-primary:5432/${POSTGRES_DB}
+      - DATABASE_URL_REPLICA=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@pg-replica:5432/${POSTGRES_DB}
       - REDIS_URL=redis://redis:6379
-
+      - SERVER_NAME=api-1
     ports:
       - 8000:8000
-
-  db:
+    healthcheck:
+      test: [ "CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+  api-2:
+    build: .
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      pg-primary:
+        condition: service_healthy
+        restart: true
+      pg-replica:
+        condition: service_healthy
+        restart: true
+      redis:
+        condition: service_healthy
+        restart: true
+    environment:
+      - PYTHONUNBUFFERED=1
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@pg-primary:5432/${POSTGRES_DB}
+      - DATABASE_URL_REPLICA=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@pg-replica:5432/${POSTGRES_DB}
+      - REDIS_URL=redis://redis:6379
+      - SERVER_NAME=api-2
+    ports:
+      - 8001:8000
+    healthcheck:
+      test: [ "CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+  migrate:
+    build: .
+    depends_on:
+      pg-primary:
+        condition: service_healthy
+        restart: true
+      pg-replica:
+        condition: service_healthy
+        restart: true
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@pg-primary:5432/${POSTGRES_DB}
+      - DATABASE_URL_REPLICA=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@pg-primary:5432/${POSTGRES_DB}
+      - REDIS_URL=redis://dummy:6379 #not used
+    command: [ "uv", "run", "alembic", "upgrade", "head" ]
+  pg-primary:
     image: postgres:18
     restart: always
-
     environment:
       - POSTGRES_USER=${POSTGRES_USER?Variable not set}
       - POSTGRES_DB=${POSTGRES_DB?Variable not set}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD?Variable not set}
-
     volumes:
-      - db-data:/var/lib/postgresql/18/docker
-
+      - pg-primary-data:/var/lib/postgresql/18/docker
+      - ./postgres/primary/init:/docker-entrypoint-initdb.d
+      - ./postgres/primary/postgresql.conf:/etc/postgresql/postgresql.conf
+    command: postgres -c config_file=/etc/postgresql/postgresql.conf
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}" ]
       interval: 10s
-      retries: 5
-      start_period: 30s
+      retries: 3
+      start_period: 20s
       timeout: 10s
-
     ports:
       - 5433:5432
-
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
+  pg-replica:
+    image: postgres:18
+    restart: always
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER?Variable not set}
+      - POSTGRES_DB=${POSTGRES_DB?Variable not set}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD?Variable not set}
+    volumes:
+      - pg-replica-data:/var/lib/postgresql/18/docker
+      - ./postgres/replica/entrypoint.sh:/entrypoint.sh
+    entrypoint: [ "/bin/bash", "/entrypoint.sh" ]
+    depends_on:
+      pg-primary:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}" ]
+      interval: 10s
+      retries: 3
+      start_period: 20s
+      timeout: 10s
+    ports:
+      - 5434:5432
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M
   redis:
     image: redis:latest
-
     ports:
       - 6379:6379
-
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    deploy:
+      resources:
+        limits:
+          cpus: '0.25'
+          memory: 256M
 volumes:
-  db-data:
+  pg-primary-data:
+  pg-replica-data:

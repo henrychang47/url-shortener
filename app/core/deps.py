@@ -10,38 +10,29 @@ from app.repositories.link_cache_repo import LinkCacheRepository
 from app.repositories.link_repo import LinkRepository
 from app.services.link_service import LinkService
 
-from .database import get_db
+from .database import get_read_session, get_session
 
-SessionDep = Annotated[AsyncSession, Depends(get_db)]
+SessionDep = Annotated[AsyncSession, Depends(get_session)]
+ReadSessionDep = Annotated[AsyncSession, Depends(get_read_session)]
 RedisDep = Annotated[Redis, Depends(get_redis)]
 
 
-def get_link_repo(session: SessionDep) -> LinkRepository:
-    return LinkRepository(session)
-
-
-LinkRepositoryDep = Annotated[LinkRepository, Depends(get_link_repo)]
-
-
-def get_link_cache_repo(redis: RedisDep):
-    return LinkCacheRepository(redis)
-
-
-LinkCacheRepositoryDep = Annotated[LinkCacheRepository, Depends(get_link_cache_repo)]
-
-
 def get_link_service(
-    repo: LinkRepositoryDep,
-    cache_repo: LinkCacheRepositoryDep,
+    session: SessionDep,
+    read_session: ReadSessionDep,
+    redis: RedisDep,
 ) -> LinkService:
-    return LinkService(repo, cache_repo)
+    repo = LinkRepository(session)
+    read_repo = LinkRepository(read_session)
+    cache_repo = LinkCacheRepository(redis)
+    return LinkService(repo, read_repo, cache_repo)
 
 
 LinkServiceDep = Annotated[LinkService, Depends(get_link_service)]
 
 
 class RateLimiter:
-    def __init__(self, window_size: int = 60, limit: int = 10) -> None:
+    def __init__(self, window_size: int = 30, limit: int = 30) -> None:
         self.window_size = window_size
         self.limit = limit
 

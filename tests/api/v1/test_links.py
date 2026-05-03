@@ -59,6 +59,40 @@ class TestLinkStats:
         response = await client.get("/v1/links/doesnotexist/stats")
         assert response.status_code == 404
 
+    async def test_multiple_links_stats(self, client: AsyncClient):
+        """Stats for multiple codes returns correct info for each."""
+        response1 = await client.post(
+            "/v1/links", json={"original_url": "https://example.com/1"}
+        )
+        code1 = response1.json()["code"]
+
+        response2 = await client.post(
+            "/v1/links", json={"original_url": "https://example.com/2"}
+        )
+        code2 = response2.json()["code"]
+
+        stats_response = await client.get(f"/v1/links?codes={code1}&codes={code2}")
+        assert stats_response.status_code == 200
+        data = stats_response.json()
+        assert len(data) == 2
+        codes = {item["code"] for item in data}
+        assert code1 in codes and code2 in codes
+
+    async def test_multiple_links_stats_with_invalid_code(self, client: AsyncClient):
+        """Stats with some valid and some invalid codes returns only valid ones."""
+        response1 = await client.post(
+            "/v1/links", json={"original_url": "https://example.com/1"}
+        )
+        code1 = response1.json()["code"]
+
+        await client.post("/v1/links", json={"original_url": "https://example.com/2"})
+
+        stats_response = await client.get(f"/v1/links?codes={code1}&codes=invalid")
+        assert stats_response.status_code == 200
+        data = stats_response.json()
+        assert len(data) == 1
+        assert data[0]["code"] == code1
+
 
 class TestRedirect:
     async def test_redirect_success(self, client: AsyncClient):

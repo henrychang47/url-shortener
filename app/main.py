@@ -5,6 +5,7 @@ from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.api.v1 import links
 from app.core.config import settings
@@ -28,6 +29,7 @@ async def _cleanup_loop() -> None:
                 redis = await get_redis()
                 service = LinkService(
                     repo=LinkRepository(db),
+                    read_repo=LinkRepository(db),
                     cache_repo=LinkCacheRepository(redis),
                 )
                 deleted = await service.cleanup_expired()
@@ -59,6 +61,7 @@ app.add_middleware(
 )
 
 app.include_router(links.router)
+app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 
 @app.get("/")
@@ -69,3 +72,8 @@ async def serve_frontend():
 @app.get("/health")
 async def health():
     return {"status": "ok"}
+
+
+@app.get("/whoami")
+async def whoami():
+    return {"server": settings.SERVER_NAME}

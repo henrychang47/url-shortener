@@ -11,8 +11,5 @@ RUN uv sync
 COPY app app/
 COPY alembic alembic/
 COPY alembic.ini .
-COPY entrypoint.sh .
 
-RUN chmod +x entrypoint.sh
-
-CMD ["bash", "entrypoint.sh"]
+CMD ["uv", "run", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
