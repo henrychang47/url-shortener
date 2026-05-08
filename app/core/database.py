@@ -11,10 +11,14 @@ engine = create_async_engine(
     connect_args={"statement_cache_size": 0},
 )
 
-engine_replica = create_async_engine(
-    str(settings.DATABASE_URL_REPLICA),
-    echo=settings.DEBUG,
-    connect_args={"statement_cache_size": 0},
+engine_replica = (
+    create_async_engine(
+        str(settings.DATABASE_URL_REPLICA),
+        echo=settings.DEBUG,
+        connect_args={"statement_cache_size": 0},
+    )
+    if settings.DATABASE_URL_REPLICA
+    else engine
 )
 
 AsyncSessionLocal = async_sessionmaker(bind=engine, expire_on_commit=False)
