@@ -54,7 +54,6 @@ jobs:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
           POSTGRES_DB: test_db
-          REDIS_URL: redis://localhost:6379 # not used, but required by the fastapi configuration
         ports:
           - 5432:5432
         options: >-
@@ -82,19 +81,17 @@ jobs:
         run: uv run alembic upgrade head
         env:
           DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/test_db
+          REDIS_URL: redis://localhost:6379 # not used, but required by the fastapi configuration
 
       - name: Check no pending migrations
         run: uv run alembic check
         env:
           DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/test_db
+          REDIS_URL: redis://localhost:6379 # not used, but required by the fastapi configuration
 
       - name: Run pytest
         run: uv run pytest
         env:
           DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/test_db
+          REDIS_URL: redis://localhost:6379 # not used, but required by the fastapi configuration
 
-      - name: Run pytest
-        run: uv run pytest
-        env:
-          DATABASE_URL: postgresql+asyncpg://postgres:postgres@localhost:5432/test_db
-          REDIS_URL: redis://localhost:6379
