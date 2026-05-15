@@ -54,6 +54,7 @@ jobs:
           POSTGRES_USER: postgres
           POSTGRES_PASSWORD: postgres
           POSTGRES_DB: test_db
+          REDIS_URL: redis://localhost:6379 # not used, but required by the fastapi configuration
         ports:
           - 5432:5432
         options: >-
