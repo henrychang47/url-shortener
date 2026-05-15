@@ -73,11 +73,16 @@ class LinkRepository:
 
     async def delete_expired(self) -> int:
         now = datetime.now(timezone.utc)
-        result = await self.db.execute(
-            delete(Link).where(
+        stmt = (
+            delete(Link)
+            .where(
                 Link.expires_at.is_not(None),
                 Link.expires_at < now,
             )
+            .returning(Link.id)
         )
+        result = await self.db.execute(stmt)
+        deleted_ids = result.scalars().all()
+
         await self.db.commit()
-        return result.rowcount
+        return len(deleted_ids)
