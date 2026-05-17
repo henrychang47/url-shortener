@@ -5,33 +5,33 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>URL Shortener</title>
-  <link rel="stylesheet" href="/static/style.css">
+  <link rel="stylesheet" href="static/style.css">
 </head>
 
 <body>
   <main>
     <div class="form-section">
-    <header>
-      <h1>🔗 URL Shortener</h1>
-      <p>Paste a long URL and get a short, shareable link instantly.</p>
-    </header>
+      <header>
+        <h1>🔗 URL Shortener</h1>
+        <p>Paste a long URL and get a short, shareable link instantly.</p>
+      </header>
 
-    <!-- Form card -->
-    <div class="card">
-      <form id="shorten-form" autocomplete="off">
-        <div class="form-group">
-          <label for="url-input">Long URL</label>
-          <input type="url" id="url-input" placeholder="https://example.com/your/very/long/url" required>
-        </div>
-        <div class="form-group">
-          <label for="expiry-input">
-            Expiry date <span class="optional">(optional)</span>
-          </label>
-          <input type="datetime-local" id="expiry-input">
-        </div>
-        <button class="btn-primary" id="shorten-btn">Shorten URL</button>
-      </form>
-    </div>
+      <!-- Form card -->
+      <div class="card">
+        <form id="shorten-form" autocomplete="off">
+          <div class="form-group">
+            <label for="url-input">Long URL</label>
+            <input type="url" id="url-input" placeholder="https://example.com/your/very/long/url" required>
+          </div>
+          <div class="form-group">
+            <label for="expiry-input">
+              Expiry date <span class="optional">(optional)</span>
+            </label>
+            <input type="datetime-local" id="expiry-input">
+          </div>
+          <button class="btn-primary" id="shorten-btn">Shorten URL</button>
+        </form>
+      </div>
     </div><!-- /.form-section -->
 
     <!-- Template for a result card (cloned per new link) -->
@@ -77,7 +77,7 @@
     <div class="toast hidden" id="error-toast" role="alert"></div>
   </main>
 
-  <script src="/static/script.js"></script>
+  <script src="static/script.js"></script>
 </body>
 
 </html>

@@ -21,7 +21,7 @@ async function shortenUrl() {
             body.expires_at = new Date(expiryInput.value).toISOString();
         }
 
-        const res = await fetch('/v1/links', {
+        const res = await fetch('v1/links', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body),
@@ -35,6 +35,8 @@ async function shortenUrl() {
         showError('Network error. Is the server running?');
     } finally {
         setLoading(false);
+        urlInput.value = '';
+        expiryInput.value = '';
     }
 }
 
@@ -67,7 +69,7 @@ function removeStoredLink(code) {
 
 // ── Result cards ──────────────────────────────────────────
 function addResultCard(data) {
-    const shortUrl = `${window.location.origin}/v1/${data.code}`;
+    const shortUrl = `${window.location.origin}/url-shortener/v1/${data.code}`;
 
     const tpl = document.getElementById('result-card-tpl');
     const card = tpl.content.cloneNode(true).querySelector('.card');
@@ -96,7 +98,7 @@ function addResultCard(data) {
     card.querySelector('.btn-delete').addEventListener('click', async () => {
         if (!confirm('Delete this short link? This cannot be undone.')) return;
         try {
-            const res = await fetch(`/v1/links/${data.code}`, { method: 'DELETE' });
+            const res = await fetch(`v1/links/${data.code}`, { method: 'DELETE' });
             if (res.status === 204) {
                 card.remove();
                 removeStoredLink(data.code);
@@ -122,7 +124,7 @@ async function refreshAllStats() {
     if (cards.length === 0) return;
     try {
         const params = new URLSearchParams(cards.map(card => ['codes', card.dataset.code]));
-        const res = await fetch(`/v1/links?${params}`);
+        const res = await fetch(`v1/links?${params}`);
         if (!res.ok) return;
         const links = await res.json();
         const byCode = Object.fromEntries(links.map(l => [l.code, l]));
@@ -172,7 +174,7 @@ async function restoreStoredLinks() {
     if (codes.length === 0) return;
     try {
         const params = new URLSearchParams(codes.map(c => ['codes', c]));
-        const res = await fetch(`/v1/links?${params}`);
+        const res = await fetch(`v1/links?${params}`);
         if (!res.ok) return;
         const links = await res.json();
         const returnedCodes = new Set(links.map(l => l.code));
