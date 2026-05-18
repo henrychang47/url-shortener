@@ -179,3 +179,13 @@ class TestCleanupExpired:
         response = await client.delete("/links/expired")
         assert response.status_code == 200
         assert response.json() == {"deleted": 0}
+
+
+class TestFrontend:
+    async def test_frontend_references_versioned_static_assets(
+        self, client: AsyncClient
+    ):
+        response = await client.get("/")
+        assert response.status_code == 200
+        assert "static/script.js?v=" in response.text
+        assert "static/style.css?v=" in response.text

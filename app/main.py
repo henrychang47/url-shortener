@@ -1,10 +1,11 @@
 import asyncio
+import hashlib
 from contextlib import asynccontextmanager
 from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import FileResponse
+from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.api import links
@@ -19,6 +20,21 @@ from app.services.link_service import LinkService
 BASE_DIR = Path(__file__).parent
 
 _CLEANUP_INTERVAL = 3600
+
+
+def _asset_version(filename: str) -> str:
+    return hashlib.sha256((STATIC_DIR / filename).read_bytes()).hexdigest()[:12]
+
+
+def _render_frontend() -> str:
+    html = (STATIC_DIR / "index.html").read_text(encoding="utf-8")
+    replacements = {
+        "static/style.css": f"static/style.css?v={_asset_version('style.css')}",
+        "static/script.js": f"static/script.js?v={_asset_version('script.js')}",
+    }
+    for source, target in replacements.items():
+        html = html.replace(source, target)
+    return html
 
 
 async def _cleanup_loop() -> None:
@@ -65,7 +81,10 @@ app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
 @app.get("/")
 async def serve_frontend():
-    return FileResponse(STATIC_DIR / "index.html")
+    return HTMLResponse(
+        _render_frontend(),
+        headers={"Cache-Control": "no-store, max-age=0, must-revalidate"},
+    )
 
 
 @app.get("/health")
