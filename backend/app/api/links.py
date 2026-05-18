@@ -9,13 +9,13 @@ from fastapi import (
     Response,
     status,
 )
-from fastapi.responses import FileResponse, RedirectResponse
+from fastapi.responses import RedirectResponse
 
 from app.core.deps import LinkServiceDep, RateLimiter
-from app.core.paths import STATIC_DIR
 from app.schemas.link import LinkCreate, LinkRead
 
-router = APIRouter()
+router = APIRouter(prefix="/api")
+redirect_router = APIRouter()
 
 
 @router.post(
@@ -60,13 +60,17 @@ async def list_links(
     return await link_service.get_by_codes(codes)
 
 
-@router.get("/{code}", dependencies=[Depends(RateLimiter())], response_model=None)
+@redirect_router.get(
+    "/r/{code}", dependencies=[Depends(RateLimiter())], response_model=None
+)
 async def redirect(
     code: str, link_service: LinkServiceDep, background_tasks: BackgroundTasks
-) -> RedirectResponse | FileResponse:
+) -> RedirectResponse:
     original_url = await link_service.get_original_url(code)
     if original_url is None:
-        return FileResponse(STATIC_DIR / "404.html", status_code=404)
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, detail="Not valid code"
+        )
 
     background_tasks.add_task(link_service.increment_click_count, code)
 

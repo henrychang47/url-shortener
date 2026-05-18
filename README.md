@@ -2,7 +2,7 @@
 
 **Live Demo:** https://url-shortener-sbc1.onrender.com
 
-A URL shortening service built with FastAPI, targeting production-grade architecture with primary/replica database separation, Nginx load balancing, and read-after-write consistency.
+A URL shortening service built with FastAPI, targeting production-grade architecture with primary/replica database separation, Nginx load balancing, and read-after-write consistency. The repository is being split into `backend/` and `frontend/` workspaces; the backend now exposes API and redirect routes separately.
 
 ## Tech Stack
 
@@ -43,24 +43,24 @@ Client → Nginx (round-robin) → api-1 / api-2
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| `POST` | `/links` | Create a short link |
-| `GET` | `/{code}` | Redirect to original URL |
-| `GET` | `/links` | List links (optional `?codes=` filter) |
-| `GET` | `/links/{code}/stats` | Get link stats |
-| `DELETE` | `/links/{code}` | Delete a link |
-| `DELETE` | `/links/expired` | Delete all expired links |
+| `POST` | `/api/links` | Create a short link |
+| `GET` | `/r/{code}` | Redirect to original URL |
+| `GET` | `/api/links` | List links (optional `?codes=` filter) |
+| `GET` | `/api/links/{code}/stats` | Get link stats |
+| `DELETE` | `/api/links/{code}` | Delete a link |
+| `DELETE` | `/api/links/expired` | Delete all expired links |
 | `GET` | `/whoami` | Return current server name (load balancing verification) |
 
 **Create a link**
 ```bash
-curl -X POST http://localhost:8000/links \
+curl -X POST http://localhost:8000/api/links \
   -H "Content-Type: application/json" \
   -d '{"original_url": "https://example.com", "expires_at": null}'
 ```
 
 **Batch fetch by codes**
 ```bash
-curl "http://localhost:8000/links?codes=abc&codes=xyz"
+curl "http://localhost:8000/api/links?codes=abc&codes=xyz"
 ```
 
 ## Getting Started
@@ -95,9 +95,10 @@ curl "http://localhost:8000/links?codes=abc&codes=xyz"
 
 ## Running Tests
 
-Tests use an in-memory SQLite database and `fakeredis` — no external services needed.
+Tests use an in-memory SQLite database and `fakeredis` — no external services needed. Run backend tooling from `backend/`.
 
 ```bash
+cd backend
 uv run pytest
 ```
 

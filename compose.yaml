@@ -21,7 +21,7 @@ services:
           cpus: '0.25'
           memory: 128M
   backend:
-    build: .
+    build: ./backend
     depends_on:
       migrate:
         condition: service_completed_successfully
@@ -50,7 +50,7 @@ services:
           cpus: '0.5'
           memory: 512M
   migrate:
-    build: .
+    build: ./backend
     depends_on:
       postgres-db:
         condition: service_healthy

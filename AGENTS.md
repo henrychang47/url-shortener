@@ -6,6 +6,7 @@ Project-specific instructions for agents working in this repository.
 - Do not modify files directly on the `main` branch.
 - Create or switch to a feature branch before making any changes.
 - Use descriptive branch names following common practice, such as `feature/...`, `fix/...`, `chore/...`, or `docs/...`.
+- Commit after each completed implementation slice or milestone instead of batching multiple slices into one commit.
 
 ## Repository Layout
 - Keep backend code, tests, migrations, and Python config together.
