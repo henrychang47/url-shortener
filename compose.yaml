@@ -14,22 +14,18 @@ services:
       retries: 3
       start_period: 10s
     depends_on:
-      - api-1
-      - api-2
+      - backend
     deploy:
       resources:
         limits:
           cpus: '0.25'
           memory: 128M
-  api-1:
+  backend:
     build: .
     depends_on:
       migrate:
         condition: service_completed_successfully
-      pg-primary:
-        condition: service_healthy
-        restart: true
-      pg-replica:
+      postgres-db:
         condition: service_healthy
         restart: true
       redis:
@@ -37,45 +33,10 @@ services:
         restart: true
     environment:
       - PYTHONUNBUFFERED=1
-      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@pg-primary:5432/${POSTGRES_DB}
-      - DATABASE_URL_REPLICA=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@pg-replica:5432/${POSTGRES_DB}
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres-db:5432/${POSTGRES_DB}
       - REDIS_URL=redis://redis:6379
-      - SERVER_NAME=api-1
     ports:
       - 8000:8000
-    healthcheck:
-      test: [ "CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" ]
-      interval: 10s
-      timeout: 5s
-      retries: 3
-      start_period: 20s
-    deploy:
-      resources:
-        limits:
-          cpus: '0.5'
-          memory: 512M
-  api-2:
-    build: .
-    depends_on:
-      migrate:
-        condition: service_completed_successfully
-      pg-primary:
-        condition: service_healthy
-        restart: true
-      pg-replica:
-        condition: service_healthy
-        restart: true
-      redis:
-        condition: service_healthy
-        restart: true
-    environment:
-      - PYTHONUNBUFFERED=1
-      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@pg-primary:5432/${POSTGRES_DB}
-      - DATABASE_URL_REPLICA=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@pg-replica:5432/${POSTGRES_DB}
-      - REDIS_URL=redis://redis:6379
-      - SERVER_NAME=api-2
-    ports:
-      - 8001:8000
     healthcheck:
       test: [ "CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')" ]
       interval: 10s
@@ -90,18 +51,14 @@ services:
   migrate:
     build: .
     depends_on:
-      pg-primary:
-        condition: service_healthy
-        restart: true
-      pg-replica:
+      postgres-db:
         condition: service_healthy
         restart: true
     environment:
-      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@pg-primary:5432/${POSTGRES_DB}
-      - DATABASE_URL_REPLICA=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@pg-primary:5432/${POSTGRES_DB}
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres-db:5432/${POSTGRES_DB}
       - REDIS_URL=redis://dummy:6379 #not used
     command: [ "uv", "run", "alembic", "upgrade", "head" ]
-  pg-primary:
+  postgres-db:
     image: postgres:18
     restart: always
     environment:
@@ -109,10 +66,7 @@ services:
       - POSTGRES_DB=${POSTGRES_DB?Variable not set}
       - POSTGRES_PASSWORD=${POSTGRES_PASSWORD?Variable not set}
     volumes:
-      - pg-primary-data:/var/lib/postgresql/18/docker
-      - ./postgres/primary/init:/docker-entrypoint-initdb.d
-      - ./postgres/primary/postgresql.conf:/etc/postgresql/postgresql.conf
-    command: postgres -c config_file=/etc/postgresql/postgresql.conf
+      - postgres-db-data:/var/lib/postgresql/18/docker
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}" ]
       interval: 10s
@@ -121,33 +75,6 @@ services:
       timeout: 10s
     ports:
       - 5433:5432
-    deploy:
-      resources:
-        limits:
-          cpus: '0.5'
-          memory: 512M
-  pg-replica:
-    image: postgres:18
-    restart: always
-    environment:
-      - POSTGRES_USER=${POSTGRES_USER?Variable not set}
-      - POSTGRES_DB=${POSTGRES_DB?Variable not set}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD?Variable not set}
-    volumes:
-      - pg-replica-data:/var/lib/postgresql/18/docker
-      - ./postgres/replica/entrypoint.sh:/entrypoint.sh
-    entrypoint: [ "/bin/bash", "/entrypoint.sh" ]
-    depends_on:
-      pg-primary:
-        condition: service_healthy
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}" ]
-      interval: 10s
-      retries: 3
-      start_period: 20s
-      timeout: 10s
-    ports:
-      - 5434:5432
     deploy:
       resources:
         limits:
@@ -169,5 +96,4 @@ services:
           cpus: '0.25'
           memory: 256M
 volumes:
-  pg-primary-data:
-  pg-replica-data:
+  postgres-db-data:
