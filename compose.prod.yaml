@@ -1,9 +1,20 @@
-version: "3.8"
-
 services:
   nginx:
+    image: nginx:1-alpine
+    volumes:
+      - type: bind
+        source: ./nginx/conf.d
+        target: /etc/nginx/conf.d
+    ports:
+      - 80:80
     healthcheck:
-      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/health" ]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 1m
+      timeout: 20s
+      retries: 3
+      start_period: 10s
+    depends_on:
+      - backend
     deploy:
       resources:
         limits:
@@ -11,6 +22,28 @@ services:
           memory: 48M
 
   backend:
+    image: ${APP_IMAGE?Variable not set}
+    depends_on:
+      migrate:
+        condition: service_completed_successfully
+      postgres-db:
+        condition: service_healthy
+        restart: true
+      redis:
+        condition: service_healthy
+        restart: true
+    environment:
+      - PYTHONUNBUFFERED=1
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres-db:5432/${POSTGRES_DB}
+      - REDIS_URL=redis://redis:6379
+    ports:
+      - 8000:8000
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
     deploy:
       resources:
         limits:
@@ -18,6 +51,15 @@ services:
           memory: 160M
 
   migrate:
+    image: ${APP_IMAGE?Variable not set}
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+        restart: true
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres-db:5432/${POSTGRES_DB}
+      - REDIS_URL=redis://dummy:6379
+    command: ["uv", "run", "alembic", "upgrade", "head"]
     deploy:
       resources:
         limits:
@@ -25,6 +67,22 @@ services:
           memory: 160M
 
   postgres-db:
+    image: postgres:18
+    restart: always
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER?Variable not set}
+      - POSTGRES_DB=${POSTGRES_DB?Variable not set}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD?Variable not set}
+    volumes:
+      - postgres-db-data:/var/lib/postgresql/18/docker
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 10s
+      retries: 3
+      start_period: 20s
+      timeout: 10s
+    ports:
+      - 5433:5432
     deploy:
       resources:
         limits:
@@ -32,11 +90,21 @@ services:
           memory: 160M
 
   redis:
+    image: redis:latest
+    ports:
+      - 6379:6379
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
     deploy:
       resources:
         limits:
           cpus: '0.15'
           memory: 48M 
+
   cloudflare-tunnel:
     image: cloudflare/cloudflared:latest
     restart: always
@@ -49,3 +117,6 @@ services:
         limits:
           cpus: '0.1'
           memory: 32M
+
+volumes:
+  postgres-db-data:
