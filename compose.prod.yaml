@@ -1,7 +1,51 @@
+version: "3.8"
+
 services:
+  nginx:
+    healthcheck:
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/health" ]
+    deploy:
+      resources:
+        limits:
+          cpus: '0.15'
+          memory: 48M
+
+  backend:
+    deploy:
+      resources:
+        limits:
+          cpus: '0.3'
+          memory: 160M
+
+  migrate:
+    deploy:
+      resources:
+        limits:
+          cpus: '0.3'
+          memory: 160M
+
+  postgres-db:
+    deploy:
+      resources:
+        limits:
+          cpus: '0.3'
+          memory: 160M
+
+  redis:
+    deploy:
+      resources:
+        limits:
+          cpus: '0.15'
+          memory: 48M 
   cloudflare-tunnel:
     image: cloudflare/cloudflared:latest
     restart: always
     command: tunnel --no-autoupdate run --token ${CLOUDFLARE_TUNNEL_TOKEN}
     depends_on:
-      - nginx
+      nginx:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: '0.1'
+          memory: 32M

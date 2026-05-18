@@ -9,12 +9,9 @@ class LinkService:
     def __init__(
         self,
         repo: LinkRepository,
-        read_repo: LinkRepository,
         cache_repo: LinkCacheRepository,
-        READ_AFTER_WRITE: bool | None = None,
     ) -> None:
         self.repo = repo
-        self.read_repo = repo if READ_AFTER_WRITE else read_repo
         self.cache_repo = cache_repo
 
     async def create(self, link_create: LinkCreate) -> Link:
@@ -30,10 +27,10 @@ class LinkService:
         return link
 
     async def get_by_code(self, code: str) -> Link | None:
-        return await self.read_repo.get_by_code(code)
+        return await self.repo.get_by_code(code)
 
     async def get_by_codes(self, codes: list[str]) -> list[Link]:
-        return await self.read_repo.get_by_codes(codes)
+        return await self.repo.get_by_codes(codes)
 
     async def delete_by_code(self, code: str) -> bool:
         await self.cache_repo.delete(code)
@@ -45,7 +42,7 @@ class LinkService:
         if cache_url:
             return str(cache_url)
 
-        link: Link | None = await self.read_repo.get_by_code(code)
+        link: Link | None = await self.repo.get_by_code(code)
         if link:
             await self.cache_repo.set(
                 code, link.original_url, expires_at=link.expires_at

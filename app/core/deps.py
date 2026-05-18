@@ -1,34 +1,28 @@
 from datetime import datetime, timezone
 from typing import Annotated
 
-from fastapi import Cookie, Depends, HTTPException, Request, status
+from fastapi import Depends, HTTPException, Request, status
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.redis import get_redis
 from app.repositories.link_cache_repo import LinkCacheRepository
 from app.repositories.link_repo import LinkRepository
-from app.schemas.link import Cookies
 from app.services.link_service import LinkService
 
-from .database import get_read_session, get_session
+from .database import get_session
 
 SessionDep = Annotated[AsyncSession, Depends(get_session)]
-ReadSessionDep = Annotated[AsyncSession, Depends(get_read_session)]
 RedisDep = Annotated[Redis, Depends(get_redis)]
 
 
 def get_link_service(
     session: SessionDep,
-    read_session: ReadSessionDep,
     redis: RedisDep,
-    cookies: Annotated[Cookies, Cookie()],
 ) -> LinkService:
     repo = LinkRepository(session)
-    read_repo = LinkRepository(read_session)
     cache_repo = LinkCacheRepository(redis)
-    READ_AFTER_WRITE = cookies.read_after_write
-    return LinkService(repo, read_repo, cache_repo, READ_AFTER_WRITE)
+    return LinkService(repo, cache_repo)
 
 
 LinkServiceDep = Annotated[LinkService, Depends(get_link_service)]
