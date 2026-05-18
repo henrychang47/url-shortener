@@ -15,7 +15,7 @@ from app.core.deps import LinkServiceDep, RateLimiter
 from app.core.paths import STATIC_DIR
 from app.schemas.link import LinkCreate, LinkRead
 
-router = APIRouter(prefix="/v1")
+router = APIRouter()
 
 
 @router.post(

@@ -43,24 +43,24 @@ Client → Nginx (round-robin) → api-1 / api-2
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| `POST` | `/v1/links` | Create a short link |
-| `GET` | `/v1/{code}` | Redirect to original URL |
-| `GET` | `/v1/links` | List links (optional `?codes=` filter) |
-| `GET` | `/v1/links/{code}/stats` | Get link stats |
-| `DELETE` | `/v1/links/{code}` | Delete a link |
-| `DELETE` | `/v1/links/expired` | Delete all expired links |
+| `POST` | `/links` | Create a short link |
+| `GET` | `/{code}` | Redirect to original URL |
+| `GET` | `/links` | List links (optional `?codes=` filter) |
+| `GET` | `/links/{code}/stats` | Get link stats |
+| `DELETE` | `/links/{code}` | Delete a link |
+| `DELETE` | `/links/expired` | Delete all expired links |
 | `GET` | `/whoami` | Return current server name (load balancing verification) |
 
 **Create a link**
 ```bash
-curl -X POST http://localhost:8000/v1/links \
+curl -X POST http://localhost:8000/links \
   -H "Content-Type: application/json" \
   -d '{"original_url": "https://example.com", "expires_at": null}'
 ```
 
 **Batch fetch by codes**
 ```bash
-curl "http://localhost:8000/v1/links?codes=abc&codes=xyz"
+curl "http://localhost:8000/links?codes=abc&codes=xyz"
 ```
 
 ## Getting Started
