@@ -18,7 +18,9 @@ def main() -> None:
 
     files = {
         "/opt/url-shortener/compose.prod.yaml": encode_text(Path(args.compose_prod)),
-        "/opt/url-shortener/nginx/conf.d/default.conf": encode_text(Path(args.nginx_conf)),
+        "/opt/url-shortener/nginx/conf.d/default.conf": encode_text(
+            Path(args.nginx_conf)
+        ),
     }
 
     commands = [
