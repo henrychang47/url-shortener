@@ -1,17 +1,16 @@
 from datetime import datetime, timezone
 from typing import Annotated
 
-from fastapi import Cookie, Depends, HTTPException, Request, status
+from fastapi import Depends, HTTPException, Request, status
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.redis import get_redis
 from app.repositories.link_cache_repo import LinkCacheRepository
 from app.repositories.link_repo import LinkRepository
-from app.schemas.link import Cookies
 from app.services.link_service import LinkService
 
-from .database import get_read_session, get_session
+from .database import get_session
 
 SessionDep = Annotated[AsyncSession, Depends(get_session)]
 RedisDep = Annotated[Redis, Depends(get_redis)]

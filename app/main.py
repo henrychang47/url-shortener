@@ -29,7 +29,6 @@ async def _cleanup_loop() -> None:
                 redis = await get_redis()
                 service = LinkService(
                     repo=LinkRepository(db),
-                    read_repo=LinkRepository(db),
                     cache_repo=LinkCacheRepository(redis),
                 )
                 deleted = await service.cleanup_expired()
