@@ -33,9 +33,7 @@ class TestCreateLink:
 
     async def test_create_link_invalid_url(self, client: AsyncClient):
         """Invalid URL string should return 422 Unprocessable Entity."""
-        response = await client.post(
-            "/links", json={"original_url": "not-a-valid-url"}
-        )
+        response = await client.post("/links", json={"original_url": "not-a-valid-url"})
         assert response.status_code == 422
 
 
