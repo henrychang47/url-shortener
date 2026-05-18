@@ -1,5 +1,7 @@
 from typing import Annotated
 
+from app.core.deps import LinkServiceDep, RateLimiter
+from app.schemas.link import LinkCreate, LinkRead
 from fastapi import (
     APIRouter,
     BackgroundTasks,
@@ -10,9 +12,6 @@ from fastapi import (
     status,
 )
 from fastapi.responses import RedirectResponse
-
-from app.core.deps import LinkServiceDep, RateLimiter
-from app.schemas.link import LinkCreate, LinkRead
 
 router = APIRouter(prefix="/api")
 redirect_router = APIRouter()
