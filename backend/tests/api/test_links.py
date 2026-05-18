@@ -189,6 +189,10 @@ class TestBackendEntrypoints:
         response = await client.get("/")
         assert response.status_code == 404
 
+    async def test_static_assets_are_not_served_by_backend(self, client: AsyncClient):
+        response = await client.get("/static/script.js")
+        assert response.status_code == 404
+
     async def test_docs_use_root_path_in_openapi_url(self):
         prefixed_app = create_app(root_path="/url-shortener")
 
