@@ -6,6 +6,7 @@ class Settings(BaseSettings):
     DATABASE_URL: PostgresDsn
     REDIS_URL: RedisDsn
     DEBUG: bool = False
+    ROOT_PATH: str = ""
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 

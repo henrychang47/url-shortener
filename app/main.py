@@ -66,27 +66,31 @@ async def lifespan(app: FastAPI):
     await close_redis()
 
 
-app = FastAPI(lifespan=lifespan)
+def create_app(root_path: str | None = None) -> FastAPI:
+    app = FastAPI(lifespan=lifespan, root_path=root_path or settings.ROOT_PATH)
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-app.include_router(links.router)
-app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
-
-
-@app.get("/")
-async def serve_frontend():
-    return HTMLResponse(
-        _render_frontend(),
-        headers={"Cache-Control": "no-store, max-age=0, must-revalidate"},
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=["*"],
+        allow_methods=["*"],
+        allow_headers=["*"],
     )
 
+    app.include_router(links.router)
+    app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
 
-@app.get("/health")
-async def health():
-    return {"status": "ok"}
+    @app.get("/")
+    async def serve_frontend():
+        return HTMLResponse(
+            _render_frontend(),
+            headers={"Cache-Control": "no-store, max-age=0, must-revalidate"},
+        )
+
+    @app.get("/health")
+    async def health():
+        return {"status": "ok"}
+
+    return app
+
+
+app = create_app()

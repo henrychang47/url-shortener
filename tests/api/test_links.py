@@ -1,7 +1,9 @@
 from datetime import datetime, timedelta, timezone
 
 import pytest
-from httpx import AsyncClient
+from httpx import ASGITransport, AsyncClient
+
+from app.main import create_app
 
 pytestmark = pytest.mark.asyncio
 
@@ -189,3 +191,15 @@ class TestFrontend:
         assert response.status_code == 200
         assert "static/script.js?v=" in response.text
         assert "static/style.css?v=" in response.text
+
+    async def test_docs_use_root_path_in_openapi_url(self):
+        prefixed_app = create_app(root_path="/url-shortener")
+
+        async with AsyncClient(
+            transport=ASGITransport(app=prefixed_app, root_path="/url-shortener"),
+            base_url="http://test",
+        ) as client:
+            response = await client.get("/docs")
+
+        assert response.status_code == 200
+        assert "url: '/url-shortener/openapi.json'" in response.text

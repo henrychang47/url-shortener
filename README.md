@@ -91,6 +91,7 @@ curl "http://localhost:8000/links?codes=abc&codes=xyz"
 | `POSTGRES_DB` | PostgreSQL database name |
 | `SERVER_NAME` | Server identifier returned by `/whoami` (set per container) |
 | `DEBUG` | Enable SQLAlchemy query logging (default: `false`) |
+| `ROOT_PATH` | Reverse-proxy URL prefix, e.g. `/url-shortener` |
 
 ## Running Tests
 
