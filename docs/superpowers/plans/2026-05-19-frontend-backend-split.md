@@ -1619,7 +1619,7 @@ In `.github/workflows/ci-cd.yaml`, replace the image env block with:
 
 ```yaml
 env:
-  AWS_REGION: ap-southeast-2
+  AWS_REGION: ap-east-2
   GHCR_BACKEND_IMAGE: ghcr.io/henrychang47/url-shortener-backend
   GHCR_WEB_IMAGE: ghcr.io/henrychang47/url-shortener-web
 ```

@@ -102,6 +102,6 @@ Production CD runs from `.github/workflows/ci-cd.yaml` and triggers only on `pus
 
 - GitHub Actions builds and pushes backend image tags under `ghcr.io/henrychang47/url-shortener/backend` and frontend image tags under `ghcr.io/henrychang47/url-shortener/frontend`.
 - Actions assumes the AWS role from repository variable `AWS_ROLE_TO_ASSUME` via GitHub OIDC.
-- The deploy job targets the single running EC2 instance tagged `App=url-shortener` in `ap-southeast-2`.
+- The deploy job targets the single running EC2 instance tagged `App=url-shortener` in `ap-east-2`.
 - SSM syncs `compose.prod.yaml` and `nginx/conf.d/default.conf` into `/opt/url-shortener`.
 - EC2 reuses `/opt/url-shortener/.env`, runs migrations, restarts the stack, and checks `http://localhost/health`.
