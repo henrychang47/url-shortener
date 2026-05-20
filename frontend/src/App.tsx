@@ -3,7 +3,7 @@ import { ApiError, createLink, deleteLink, fetchLinks } from './api';
 import { getStoredCodes, removeStoredCode, saveStoredCode, syncStoredCodes } from './storage';
 import type { ShortLink } from './types';
 import { formatDate, shortUrlForCode } from './utils';
-import qrcode from './vendor-qrcode.min.js';
+import QRCode from 'qrcode';
 
 type ToastState = {
   message: string;
@@ -127,10 +127,11 @@ export default function App() {
 
   async function handleDownloadQrCode(code: string, shortUrl: string) {
     try {
-      const qr = qrcode(0, 'M');
-      qr.addData(shortUrl, 'Byte');
-      qr.make();
-      const dataUrl = qr.createDataURL(8, 2);
+      const dataUrl = await QRCode.toDataURL(shortUrl, {
+        errorCorrectionLevel: 'M',
+        margin: 2,
+        width: 256
+      });
       const anchor = document.createElement('a');
       anchor.href = dataUrl;
       anchor.download = `short-link-${code}.png`;
