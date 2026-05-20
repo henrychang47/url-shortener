@@ -1,6 +1,6 @@
 services:
   nginx:
-    image: nginx:1-alpine
+    build: ./frontend
     volumes:
       - type: bind
         source: ./nginx/conf.d
@@ -8,20 +8,21 @@ services:
     ports:
       - 80:80
     healthcheck:
-      test: [ "CMD", "curl", "-sf", "http://localhost/health" ]
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/health" ]
       interval: 1m
       timeout: 20s
       retries: 3
       start_period: 10s
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     deploy:
       resources:
         limits:
           cpus: '0.25'
           memory: 128M
   backend:
-    build: .
+    build: ./backend
     depends_on:
       migrate:
         condition: service_completed_successfully
@@ -50,7 +51,7 @@ services:
           cpus: '0.5'
           memory: 512M
   migrate:
-    build: .
+    build: ./backend
     depends_on:
       postgres-db:
         condition: service_healthy
