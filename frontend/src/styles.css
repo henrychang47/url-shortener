@@ -24,6 +24,10 @@ input {
 
 button {
   cursor: pointer;
+  transition:
+    background-color 0.16s ease,
+    color 0.16s ease,
+    opacity 0.16s ease;
 }
 
 .app-shell {
@@ -131,6 +135,10 @@ input:focus {
   background: #1f4d54;
 }
 
+.primary-button:hover:not(:disabled) {
+  background: #173c42;
+}
+
 .primary-button:disabled {
   cursor: not-allowed;
   opacity: 0.6;
@@ -143,6 +151,11 @@ input:focus {
   background: #e4e7df;
 }
 
+.secondary-button:hover,
+.short-url-row button:hover {
+  background: #d5dbcf;
+}
+
 .links-toolbar {
   display: flex;
   align-items: center;
@@ -153,7 +166,7 @@ input:focus {
 
 .links-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: 1fr;
   gap: 14px;
 }
 
@@ -236,6 +249,11 @@ dd {
   background: transparent;
 }
 
+.card-footer button:hover {
+  color: #8f1f19;
+  background: rgba(179, 38, 30, 0.08);
+}
+
 .toast {
   position: fixed;
   right: 16px;
@@ -247,6 +265,12 @@ dd {
   color: #8c1d18;
   background: #fff1f0;
   box-shadow: 0 12px 30px rgba(23, 23, 23, 0.14);
+}
+
+.toast--success {
+  border-color: #9fd1a0;
+  color: #165c1f;
+  background: #ecf8ee;
 }
 
 @media (max-width: 760px) {
