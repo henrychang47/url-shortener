@@ -1,4 +1,4 @@
-FROM python:3.12-slim
+FROM python:3.13-slim
 
 WORKDIR /app
 
@@ -6,7 +6,7 @@ COPY pyproject.toml .
 COPY uv.lock .
 
 RUN pip install uv
-RUN uv sync
+RUN uv sync --frozen --no-dev --no-install-project
 
 COPY app app/
 COPY alembic alembic/

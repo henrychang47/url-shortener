@@ -10,7 +10,8 @@ def encode_text(path: Path) -> str:
 
 def main() -> None:
     parser = argparse.ArgumentParser()
-    parser.add_argument("--image", required=True)
+    parser.add_argument("--backend-image", required=True)
+    parser.add_argument("--frontend-image", required=True)
     parser.add_argument("--output", required=True)
     parser.add_argument("--compose-prod", required=True)
     parser.add_argument("--nginx-conf", required=True)
@@ -35,7 +36,8 @@ def main() -> None:
         [
             "cd /opt/url-shortener",
             "test -f .env",
-            f"export APP_IMAGE='{args.image}'",
+            f"export BACKEND_IMAGE='{args.backend_image}'",
+            f"export FRONTEND_IMAGE='{args.frontend_image}'",
             "docker compose --env-file .env -f compose.prod.yaml pull backend migrate nginx cloudflare-tunnel",
             "docker compose --env-file .env -f compose.prod.yaml up -d postgres-db redis",
             "docker compose --env-file .env -f compose.prod.yaml up --abort-on-container-exit --exit-code-from migrate migrate",

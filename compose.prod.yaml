@@ -1,6 +1,6 @@
 services:
   nginx:
-    image: nginx:1-alpine
+    image: ${FRONTEND_IMAGE?Variable not set}
     volumes:
       - type: bind
         source: ./nginx/conf.d
@@ -14,7 +14,8 @@ services:
       retries: 3
       start_period: 10s
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     deploy:
       resources:
         limits:
@@ -22,7 +23,7 @@ services:
           memory: 48M
 
   backend:
-    image: ${APP_IMAGE?Variable not set}
+    image: ${BACKEND_IMAGE?Variable not set}
     depends_on:
       migrate:
         condition: service_completed_successfully
@@ -52,7 +53,7 @@ services:
           memory: 160M
 
   migrate:
-    image: ${APP_IMAGE?Variable not set}
+    image: ${BACKEND_IMAGE?Variable not set}
     depends_on:
       postgres-db:
         condition: service_healthy
