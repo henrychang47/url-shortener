@@ -3,15 +3,21 @@ import { ApiError, createLink, deleteLink, fetchLinks } from './api';
 import { getStoredCodes, removeStoredCode, saveStoredCode, syncStoredCodes } from './storage';
 import type { ShortLink } from './types';
 import { formatDate, shortUrlForCode } from './utils';
+import qrcode from './vendor-qrcode.min.js';
+
+type ToastState = {
+  message: string;
+  type: 'success' | 'error';
+};
 
 function messageForError(error: unknown) {
   if (error instanceof ApiError) {
     if (error.status === 429) {
-      return 'Too many requests. Please wait a minute and try again.';
+      return '請求過於頻繁，請稍候一分鐘再試。';
     }
     return error.message;
   }
-  return 'Unexpected error. Please try again.';
+  return '發生未預期錯誤，請稍後再試。';
 }
 
 function sortLinks(links: ShortLink[]) {
@@ -22,9 +28,23 @@ export default function App() {
   const [links, setLinks] = useState<ShortLink[]>([]);
   const [originalUrl, setOriginalUrl] = useState('');
   const [expiresAt, setExpiresAt] = useState('');
-  const [error, setError] = useState('');
+  const [toast, setToast] = useState<ToastState | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isPending, startTransition] = useTransition();
+
+  function showToast(message: string, type: ToastState['type']) {
+    setToast({ message, type });
+  }
+
+  useEffect(() => {
+    if (!toast) {
+      return;
+    }
+    const timer = window.setTimeout(() => {
+      setToast(null);
+    }, 2200);
+    return () => window.clearTimeout(timer);
+  }, [toast]);
 
   async function restoreLinks() {
     const codes = getStoredCodes();
@@ -39,7 +59,7 @@ export default function App() {
         setLinks(sortLinks(restored));
       });
     } catch (restoreError) {
-      setError(messageForError(restoreError));
+      showToast(messageForError(restoreError), 'error');
     }
   }
 
@@ -49,7 +69,6 @@ export default function App() {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    setError('');
     setIsSubmitting(true);
 
     try {
@@ -63,57 +82,79 @@ export default function App() {
       });
       setOriginalUrl('');
       setExpiresAt('');
+      showToast('短網址建立成功。', 'success');
     } catch (submitError) {
-      setError(messageForError(submitError));
+      showToast(messageForError(submitError), 'error');
     } finally {
       setIsSubmitting(false);
     }
   }
 
   async function handleRefreshAll() {
-    setError('');
     try {
       const refreshed = await fetchLinks(getStoredCodes());
       syncStoredCodes(new Set(refreshed.map((link) => link.code)));
       startTransition(() => {
         setLinks(sortLinks(refreshed));
       });
+      showToast('已重新整理連結資料。', 'success');
     } catch (refreshError) {
-      setError(messageForError(refreshError));
+      showToast(messageForError(refreshError), 'error');
     }
   }
 
   async function handleDelete(code: string) {
-    setError('');
     try {
       await deleteLink(code);
       removeStoredCode(code);
       startTransition(() => {
         setLinks((currentLinks) => currentLinks.filter((link) => link.code !== code));
       });
+      showToast('連結已刪除。', 'success');
     } catch (deleteError) {
-      setError(messageForError(deleteError));
+      showToast(messageForError(deleteError), 'error');
     }
   }
 
   async function handleCopy(shortUrl: string) {
-    await navigator.clipboard.writeText(shortUrl);
+    try {
+      await navigator.clipboard.writeText(shortUrl);
+      showToast('已複製短網址。', 'success');
+    } catch (copyError) {
+      showToast(messageForError(copyError), 'error');
+    }
+  }
+
+  async function handleDownloadQrCode(code: string, shortUrl: string) {
+    try {
+      const qr = qrcode(0, 'M');
+      qr.addData(shortUrl, 'Byte');
+      qr.make();
+      const dataUrl = qr.createDataURL(8, 2);
+      const anchor = document.createElement('a');
+      anchor.href = dataUrl;
+      anchor.download = `short-link-${code}.png`;
+      document.body.append(anchor);
+      anchor.click();
+      anchor.remove();
+      showToast('QR Code 已下載。', 'success');
+    } catch (downloadError) {
+      showToast(messageForError(downloadError), 'error');
+    }
   }
 
   return (
     <main className="app-shell">
       <section className="create-panel">
         <div className="app-header">
-          <p className="eyebrow">Anonymous short links</p>
-          <h1>Cut long URLs down to a clean route.</h1>
-          <p>
-            Create temporary links, keep the current session visible, and refresh click counts without an account.
-          </p>
+          <p className="eyebrow">匿名短網址</p>
+          <h1>把長網址縮成乾淨好分享的連結。</h1>
+          <p>不需帳號即可建立短網址，保留本次工作階段的連結，並隨時更新點擊次數。</p>
         </div>
 
         <form className="shorten-form" onSubmit={handleSubmit}>
           <label>
-            Long URL
+            原始網址
             <input
               type="url"
               required
@@ -124,22 +165,22 @@ export default function App() {
           </label>
 
           <label>
-            Expiry date <span>Optional</span>
-            <input type="date" value={expiresAt} onChange={(event) => setExpiresAt(event.target.value)} />
+            到期日期與時間 <span>選填</span>
+            <input type="datetime-local" value={expiresAt} onChange={(event) => setExpiresAt(event.target.value)} />
           </label>
 
           <button className="primary-button" disabled={isSubmitting} type="submit">
-            {isSubmitting ? 'Shortening...' : 'Shorten URL'}
+            {isSubmitting ? '縮址中...' : '建立短網址'}
           </button>
         </form>
       </section>
 
       {links.length > 0 ? (
-        <section className="links-section" aria-label="Created links" aria-busy={isPending}>
+        <section className="links-section" aria-label="已建立連結" aria-busy={isPending}>
           <div className="links-toolbar">
-            <h2>Session links</h2>
+            <h2>已建立的連結</h2>
             <button className="secondary-button" type="button" onClick={handleRefreshAll}>
-              Refresh All
+              全部重新整理
             </button>
           </div>
 
@@ -148,27 +189,38 @@ export default function App() {
               const shortUrl = shortUrlForCode(link.code);
               return (
                 <article className="link-card" data-testid={`link-card-${link.code}`} key={link.code}>
-                  <div className="card-topline">Your short link</div>
+                  <div className="card-topline">你的短網址</div>
                   <div className="short-url-row">
                     <a href={shortUrl} target="_blank" rel="noreferrer">
                       {shortUrl}
                     </a>
                     <button type="button" onClick={() => handleCopy(shortUrl)}>
-                      Copy
+                      複製
+                    </button>
+                    <button
+                      type="button"
+                      className="qr-download-button"
+                      aria-label="下載短網址QR CODE"
+                      data-tooltip="下載短網址QR CODE"
+                      onClick={() => handleDownloadQrCode(link.code, shortUrl)}
+                    >
+                      <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M3 3h8v8H3zM5 5v4h4V5zM13 3h8v8h-8zm2 2v4h4V5zM3 13h8v8H3zm2 2v4h4v-4zM13 13h2v2h-2zM17 13h4v2h-4zM15 15h2v2h-2zM19 15h2v2h-2zM13 17h2v2h-2zM17 17h4v4h-6v-2h2z" />
+                      </svg>
                     </button>
                   </div>
 
                   <dl className="stats-grid">
                     <div>
-                      <dt>Clicks</dt>
+                      <dt>點擊次數</dt>
                       <dd>{link.click_count}</dd>
                     </div>
                     <div>
-                      <dt>Created</dt>
+                      <dt>建立時間</dt>
                       <dd>{formatDate(link.created_at)}</dd>
                     </div>
                     <div>
-                      <dt>Expires</dt>
+                      <dt>到期時間</dt>
                       <dd>{link.expires_at ? formatDate(link.expires_at) : '-'}</dd>
                     </div>
                   </dl>
@@ -176,7 +228,7 @@ export default function App() {
                   <footer className="card-footer">
                     <span>{link.original_url}</span>
                     <button type="button" onClick={() => handleDelete(link.code)}>
-                      Delete this link
+                      刪除此連結
                     </button>
                   </footer>
                 </article>
@@ -186,9 +238,9 @@ export default function App() {
         </section>
       ) : null}
 
-      {error ? (
-        <div className="toast" role="alert">
-          {error}
+      {toast ? (
+        <div className={`toast ${toast.type === 'success' ? 'toast--success' : ''}`} role={toast.type === 'error' ? 'alert' : 'status'}>
+          {toast.message}
         </div>
       ) : null}
     </main>
