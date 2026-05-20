@@ -188,23 +188,19 @@ describe('App', () => {
 
   it('downloads qr code and shows success toast', async () => {
     sessionStorage.setItem('url-shortener-links', JSON.stringify(['abc123']));
-    vi.spyOn(globalThis, 'fetch')
-      .mockResolvedValueOnce(
-        new Response(JSON.stringify([link]), {
-          status: 200,
-          headers: { 'Content-Type': 'application/json' }
-        })
-      )
-      .mockResolvedValueOnce(new Response(new Blob(['qr'], { type: 'image/png' }), { status: 200 }));
+    const fetchMock = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify([link]), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' }
+      })
+    );
 
     render(<App />);
 
     await screen.findByTestId('link-card-abc123');
     await userEvent.click(screen.getByRole('button', { name: '下載短網址QR CODE' }));
 
-    expect(globalThis.fetch).toHaveBeenLastCalledWith(
-      'https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=http%3A%2F%2Flocalhost%3A3000%2Furl-shortener%2Fr%2Fabc123'
-    );
+    expect(fetchMock).toHaveBeenCalledTimes(1);
     expect(await screen.findByRole('status')).toHaveTextContent('QR Code 已下載。');
   });
 });

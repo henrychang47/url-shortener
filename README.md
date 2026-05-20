@@ -111,8 +111,3 @@ npm run lint
 npm test
 npm run build
 ```
-
-前端互動補充：
-
-- 「下載短網址 QR Code」功能使用外部 QR 服務：
-  - `https://api.qrserver.com/v1/create-qr-code/`

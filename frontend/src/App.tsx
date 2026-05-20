@@ -3,6 +3,7 @@ import { ApiError, createLink, deleteLink, fetchLinks } from './api';
 import { getStoredCodes, removeStoredCode, saveStoredCode, syncStoredCodes } from './storage';
 import type { ShortLink } from './types';
 import { formatDate, shortUrlForCode } from './utils';
+import qrcode from './vendor-qrcode.min.js';
 
 type ToastState = {
   message: string;
@@ -126,20 +127,16 @@ export default function App() {
 
   async function handleDownloadQrCode(code: string, shortUrl: string) {
     try {
-      const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=320x320&data=${encodeURIComponent(shortUrl)}`;
-      const response = await fetch(qrUrl);
-      if (!response.ok) {
-        throw new Error('QR 產生失敗');
-      }
-      const blob = await response.blob();
-      const objectUrl = window.URL.createObjectURL(blob);
+      const qr = qrcode(0, 'M');
+      qr.addData(shortUrl, 'Byte');
+      qr.make();
+      const dataUrl = qr.createDataURL(8, 2);
       const anchor = document.createElement('a');
-      anchor.href = objectUrl;
+      anchor.href = dataUrl;
       anchor.download = `short-link-${code}.png`;
       document.body.append(anchor);
       anchor.click();
       anchor.remove();
-      window.URL.revokeObjectURL(objectUrl);
       showToast('QR Code 已下載。', 'success');
     } catch (downloadError) {
       showToast(messageForError(downloadError), 'error');
