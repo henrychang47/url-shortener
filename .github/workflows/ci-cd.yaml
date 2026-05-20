@@ -2,8 +2,6 @@ name: CICD
 
 permissions:
   contents: read
-  packages: write
-  id-token: write
 
 env:
   AWS_REGION: ap-east-2
@@ -153,6 +151,10 @@ jobs:
     runs-on: ubuntu-latest
     needs: test
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      packages: write
+      id-token: write
 
     steps:
       - name: Checkout code
