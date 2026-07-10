@@ -1,7 +1,5 @@
 # URL Shortener
 
-**Demo 網址：** https://app.henry.christmas/url-shortener/
-
 URL Shortener 是一個短網址服務，採用 FastAPI 後端與 React + Vite 前端。Nginx 會在 `/url-shortener/` 提供前端靜態檔案，並將 API、短網址轉址與文件路徑反向代理到後端。
 
 ## 功能
